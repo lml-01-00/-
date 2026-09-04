@@ -1,0 +1,264 @@
+/* ===== 桌面版覆盖层(pc.css)=====
+ * 唯一断点:≥1024px。全部桌面差异收敛于此,不改 base/ui/comp/pages 的 375 规则(窄屏零回归)。
+ * 选择器保持与原规则同等 specificity,晚加载覆盖生效。
+ */
+
+@media (min-width:1024px){
+/* =========================================================
+   一、壳层:解锁 375 手机壳,页面改桌面容器
+   ========================================================= */
+body{background:#edeae4}
+#viewRoot{max-width:none;box-shadow:none;background:transparent}
+#viewRoot::before{content:none}
+
+/* 手机导航条 / 底部 TabBar 桌面隐藏(顶通栏取而代之) */
+.navbar,.navbar--gradient,.navbar--wechat{display:none!important}
+.tabbar-root,.tabbar-space{display:none!important}
+.page--tab{padding-bottom:0}
+
+/* 页面统一容器:内容白卡限 1200 居中 */
+.page{width:100%;max-width:1200px;margin:0 auto;background:transparent;
+  min-height:calc(100vh - 56px)}
+
+/* =========================================================
+   二、顶部通栏(renderPcTopbar 生成 .pc-topbar)
+   ========================================================= */
+.pc-topbar{position:sticky;top:0;z-index:900;height:56px;background:var(--nav-bg);
+  box-shadow:0 2px 10px rgba(26,58,23,.18)}
+.pc-topbar__in{max-width:1200px;height:56px;margin:0 auto;padding:0 20px;
+  display:flex;align-items:center;gap:8px}
+.pc-brand{display:flex;align-items:center;gap:9px;cursor:pointer;flex:none;user-select:none}
+.pc-brand__logo{width:32px;height:32px;border-radius:9px;background:var(--color-accent);
+  color:var(--color-primary-dark);font-size:19px;font-weight:800;font-family:'KaiTi','STKaiti','楷体',serif;
+  display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)}
+.pc-brand__name{color:#fff;font-size:20px;font-weight:600;letter-spacing:1px;
+  font-family:'KaiTi','STKaiti','楷体','Microsoft YaHei',serif}
+.pc-nav{display:flex;align-items:center;margin-left:26px;flex:none}
+.pc-nav__item{padding:0 17px;height:56px;line-height:56px;color:rgba(255,255,255,.86);
+  font-size:15px;cursor:pointer;position:relative;transition:color .15s;user-select:none;white-space:nowrap}
+.pc-nav__item:hover{color:#fff}
+.pc-nav__item.active{color:#fff;font-weight:600}
+.pc-nav__item.active::after{content:'';position:absolute;left:12px;right:12px;bottom:0;height:3px;
+  border-radius:3px 3px 0 0;background:var(--color-accent)}
+.pc-search{flex:1;max-width:430px;height:36px;margin:0 auto;padding:0 13px;border-radius:18px;
+  background:rgba(255,255,255,.94);display:flex;align-items:center;gap:7px;cursor:pointer;
+  transition:box-shadow .15s;min-width:180px}
+.pc-search:hover{box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.pc-search__icon{color:#8a8a8a;font-size:16px}
+.pc-search__text{color:#9a9a9a;font-size:13px}
+.pc-cart{display:flex;align-items:center;gap:5px;color:#fff;font-size:14px;flex:none;
+  cursor:pointer;padding:8px 6px 8px 14px;border-radius:18px;user-select:none;position:relative}
+.pc-cart:hover{background:rgba(255,255,255,.13)}
+.pc-cart__icon{font-size:21px}
+.pc-cart__num{min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#ff4d4f;
+  color:#fff;font-size:11px;line-height:17px;text-align:center;position:absolute;top:0;left:32px;
+  box-shadow:0 0 0 2px rgba(45,90,39,.8)}
+.pc-cart__num.hidden{display:none}
+
+/* 窄屏(手机导航条内)购物车角标 */
+.nav-cart{position:relative;display:flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:50%;cursor:pointer;color:#fff;font-size:19px}
+.nav-cart__num{position:absolute;top:-2px;right:-2px;min-width:15px;height:15px;padding:0 3px;
+  border-radius:8px;background:var(--color-unread);color:#fff;font-size:9px;line-height:15px;text-align:center}
+.nav-cart__num.hidden{display:none}
+
+/* =========================================================
+   三、全局收编组 1:页内 fixed 底条 → 内容等宽通栏(继续吸附底部)
+   ========================================================= */
+.goods-bottom-operation,.oc-paybar,.od-bbar,.cp-center,.aps-bar,.ft-bar,
+.rc-bottom,.cart-bar,.al-bottom,.create-page .submit-button-container{
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+  width:100%!important;max-width:1200px!important;border-radius:0}
+
+/* =========================================================
+   三、全局收编组 2:全屏遮罩 → 视口铺满
+   ========================================================= */
+.popup-mask,.fl-mask,.oc-notes-mask,.oc-cp-mask,.oc-ng-mask,.cpa-mask,.aps-mask,.aps-dmask,
+.uc-sheet-mask,.uc-av-mask,.msp-cm-mask,.rc-dlg-mask{position:fixed!important;
+  inset:0!important;width:100%!important;height:100%!important;left:0!important;top:0!important;
+  transform:none!important}
+
+/* =========================================================
+   三、全局收编组 3:底部弹层面板 → 居中模态卡
+   ========================================================= */
+/* t-popup 系(规格/促销/购物车选规格共用壳)居中卡 */
+.t-popup,.t-popup--bottom{top:50%!important;bottom:auto!important;left:50%!important;
+  right:auto!important;width:560px!important;max-width:min(92vw,660px)!important;
+  transform:translate(-50%,-50%)!important;max-height:86vh;overflow-y:auto;
+  border-radius:14px!important;box-shadow:0 12px 40px rgba(0,0,0,.2)!important}
+/* oc-notes 备注弹层本就是 mask 内绝对居中,保持 320 窄卡即可(无需规则) */
+/* 结算页:优惠券面板 / 无效单面板(absolute bottom 抽屉 → 居中卡) */
+.oc-cp-panel,.oc-ng-panel{left:50%!important;right:auto!important;top:50%!important;
+  bottom:auto!important;width:560px!important;max-width:min(92vw,640px)!important;
+  transform:translate(-50%,-50%)!important;max-height:84vh;overflow-y:auto;
+  border-radius:14px!important;box-shadow:0 12px 40px rgba(0,0,0,.2)!important}
+/* 用户中心客服弹层(flex-end 底部 → 居中) */
+.uc-sheet-mask{align-items:center!important}
+.uc-sheet{width:min(92vw,560px)!important;border-radius:14px!important}
+/* 售后单弹层 / 优惠券活动弹层 */
+.cpa-sheet,.aps-sheet{left:50%!important;right:auto!important;top:50%!important;
+  bottom:auto!important;width:min(92vw,560px)!important;
+  transform:translate(-50%,-50%)!important;border-radius:14px!important;
+  max-height:84vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.2)!important}
+/* 商品筛选:右侧抽屉(不是居中卡) */
+.fl-popup{left:auto!important;right:0!important;width:min(400px,92vw)!important;
+  border-radius:14px 0 0 14px!important}
+
+/* =========================================================
+   三、全局收编组 4:右侧悬浮元素 → 贴内容区右缘
+   ========================================================= */
+.cpa-float,.msp-top-btn{right:max(24px,calc(50vw - 600px))!important;left:auto!important}
+
+/* =========================================================
+   五、页面级桌面重排
+   ========================================================= */
+
+/* ---- 5.1 首页 ---- */
+.page-home{background:#edeae4;padding:0 0 26px}
+.home-page-header{background:#fff;border-radius:14px;box-shadow:0 3px 14px rgba(30,55,25,.05);
+  padding:14px 16px 16px;margin:16px 18px 0}
+.home-page-header .search{display:none!important}
+.home-page-header .swiper-wrap{margin-top:0}
+.home-page-header .t-swiper{height:320px;border-radius:12px}
+.home-page-header .t-swiper img{border-radius:12px}
+.home-page-container{background:transparent;padding:0 18px}
+.home-page-container .goods-list-wrap{margin-top:14px}
+.goods-list-wrap{grid-template-columns:repeat(5,minmax(0,1fr));column-gap:14px;row-gap:14px}
+.home-page-container .goods-list-wrap .goods-card{background:#fff;border-radius:10px;
+  box-shadow:0 2px 8px rgba(30,55,25,.06)}
+.home-page-container .t-tabs__scroll{display:flex;flex-wrap:wrap;padding-top:10px}
+
+/* ---- 5.2 分类 ---- */
+.category-page{height:auto!important;min-height:calc(100vh - 160px);overflow:visible!important;
+  background:#fff;border-radius:14px;margin:16px 18px;box-shadow:0 2px 12px rgba(30,55,25,.05)}
+.cat-sidebar{width:200px;height:auto!important;border-radius:14px 0 0 14px;overflow:visible!important}
+.cat-side-item{padding:15px 0;background:#faf9f7}
+.cat-side-item.active{background:#fff}
+.cat-main{height:auto!important;overflow:visible!important}
+.cat-group{margin:22px 30px 0}
+.cat-grid-item{width:20%}
+.cat-grid-item img{width:76px;height:76px}
+
+/* ---- 5.3 商品列表 / 搜索结果 / 促销专场 / 优惠券专场 ---- */
+.goods-list-page{background:#edeae4;padding:14px 18px 30px}
+.result-container{background:#edeae4;padding:14px 18px 30px}
+.goods-list-page .fl-bar,.result-container .fl-bar{background:#fff;border-radius:12px 12px 0 0;
+  padding:0 10px}
+.goods-list-page .fl-bar .fl-item,.result-container .fl-bar .fl-item{max-width:220px}
+.goods-list-page .list-body,.result-container .result-body{background:#fff;border-radius:0 0 12px 12px;
+  padding-bottom:8px}
+.goods-list-page .category-goods-list,.result-container .category-goods-list{background:#fff;
+  padding:14px 16px 20px}
+/* glist(flex 行 → 5 列网格) */
+.goods-list-page .goods-list-wrap.glist,.result-container .goods-list-wrap.glist{
+  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));column-gap:14px;row-gap:16px;
+  justify-content:normal}
+.goods-list-page .goods-card,.result-container .goods-card{width:auto!important;background:#fff;
+  border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(30,55,25,.07)}
+.goods-list-page .goods-card__thumb,.result-container .goods-card__thumb{width:100%;height:auto;
+  aspect-ratio:1;margin:0}
+.goods-list-page .goods-card__thumb img,.result-container .goods-card__thumb img{border-radius:0}
+.goods-list-page .goods-card__body,.result-container .goods-card__body{border-radius:0;background:#fff}
+/* 促销专场(左图右文列表 → 白卡行,保持列表语义) */
+.pd-page{background:#edeae4;padding:0 18px 30px}
+.pd-page .pd-banner-box{width:100%;border-radius:14px;overflow:hidden;margin-top:14px}
+.pd-page .pd-list{background:#edeae4;padding:12px 0 0}
+.pd-page .pd-list .goods-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;
+  box-shadow:0 2px 10px rgba(30,55,25,.05)}
+.pd-page .pd-list .goods-card__thumb{width:120px;height:120px;margin-right:16px}
+.pd-page .pd-list .goods-card__thumb img{width:120px;height:120px}
+/* 优惠券活动商品(coupon-activity):整卡区 */
+.coupon-activity-page{background:#edeae4;padding:14px 18px 30px}
+
+/* ---- 5.4 商品详情(左图右信息) ---- */
+.goods-detail-page{background:#fff;min-height:100vh;padding-bottom:30px}
+.goods-detail-page .goods-head{display:grid!important;grid-template-columns:minmax(0,520px) minmax(0,1fr);
+  column-gap:36px;align-items:stretch;padding:20px 22px 10px}
+.goods-detail-page .t-swiper--square{height:auto!important;min-height:520px;width:100%;
+  grid-column:1!important;grid-row:1 / span 3!important;border-radius:14px;overflow:hidden;
+  box-shadow:0 4px 18px rgba(30,55,25,.08);background:#e8e6e0}
+.goods-detail-page .goods-head>.goods-info{grid-column:2!important;grid-row:1!important;
+  padding-top:6px}
+.goods-detail-page .goods-head>.spu-select{grid-column:2!important;grid-row:2!important}
+.goods-detail-page .goods-head>.comments-wrap{grid-column:2!important;grid-row:3!important;
+  margin-top:14px}
+.goods-detail-page .goods-info .goods-name,.goods-detail-page .goods-info .sub{max-width:640px}
+.goods-detail-page .desc-content{clear:both;margin:6px 22px 0;padding:22px 0 10px;
+  border-top:1px solid #f0f0f0}
+
+/* ---- 5.5 订单确认(左主内容 右金额卡) ---- */
+.oc-page{background:#edeae4!important;display:grid!important;
+  grid-template-columns:minmax(0,1fr) 340px;column-gap:16px;align-items:start;
+  padding:16px 18px 90px!important}
+.oc-page>.oc-addr,.oc-page>.oc-stripe,.oc-page>.oc-store-card,.oc-page>.oc-pay-detail{grid-column:1}
+.oc-page>.oc-stripe{height:14px}
+.oc-page>.oc-amount-box{grid-column:2!important;grid-row:1 / span 5!important;align-self:start;
+  position:sticky;top:72px;border-radius:12px;box-shadow:0 2px 14px rgba(30,55,25,.06);
+  padding-bottom:6px;overflow:hidden}
+.oc-page>.oc-foot-space{display:none}
+/* 结算页白卡间距 */
+.oc-page>.oc-addr,.oc-page>.oc-store-card,.oc-page>.oc-pay-detail{border-radius:12px;
+  box-shadow:0 2px 12px rgba(30,55,25,.05)}
+.oc-page>.oc-addr{margin-bottom:14px}
+
+/* ---- 5.6 个人中心 ---- */
+.uc-page{background:#edeae4;padding:16px 18px 30px}
+.uc-hero{position:static!important;transform:none!important;width:auto!important;
+  max-width:none!important;left:auto!important;height:190px;border-radius:16px;margin-bottom:14px;
+  box-shadow:0 6px 20px rgba(40,90,40,.25)}
+.uc-hero-in{padding:0 30px;height:100%;display:flex;align-items:center}
+.uc-hero-head{margin-top:0!important;margin-bottom:0!important;width:100%}
+.uc-hero-head:after{content:'';display:block;clear:both}
+.uc-body{margin-top:0!important;padding:0!important}
+.uc-orders,.uc-cell-box{border-radius:12px;box-shadow:0 2px 10px rgba(30,55,25,.04)}
+
+/* ---- 5.7 共生产品 / 消息(自绘头页面收敛为页内容) ---- */
+.gs-page{background:#edeae4;padding:0 18px 30px}
+.gs-navbar{display:none!important}
+.gs-banner-wrapper{margin:16px 0 0;border-radius:16px;width:100%}
+.gs-section-header{padding:26px 6px 10px}
+.gs-grid{grid-template-columns:repeat(4,1fr);grid-gap:12px;padding:0}
+.gs-product-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(30,55,25,.05)}
+.msp-page{background:#edeae4;padding-bottom:26px}
+.msp-page .msp-content{max-width:1160px;margin:0 auto}
+.msp-quick{border-radius:0 0 18px 18px}
+
+/* ---- 5.8 评价/订单/优惠券等卡片列表页 ---- */
+.comments-page{background:#edeae4;padding:14px 18px 30px}
+.comments-page .comments-header{background:#fff;border-radius:12px 12px 0 0;padding:10px 16px 0;
+  flex-wrap:wrap}
+.comments-page .comments-card-list{background:#fff;border-radius:0 0 12px 12px;padding:4px 14px 16px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:12px}
+.comments-page .comments-card-item{border-radius:10px;margin:8px 0 0;padding:10px 12px;
+  background:#fafaf8}
+.cp-page{background:#edeae4;padding:14px 18px 30px}
+.cp-page .cp-tabs{background:#fff;border-radius:12px 12px 0 0}
+.cp-page .cp-list{background:#fff;border-radius:0 0 12px 12px;padding:14px}
+.cp-page .cp-list .cp-card{width:100%;max-width:560px;margin:0 auto 14px}
+.ol-page{background:#edeae4;padding:14px 18px 30px}
+.ol-page .ol-tabs{background:#fff;border-radius:12px 12px 0 0}
+.ol-page .ol-cards{background:#fff;border-radius:0 0 12px 12px;padding:10px 14px 14px;min-height:60vh}
+.ol-page .ol-card{margin:0 0 14px;border-radius:10px;box-shadow:0 1px 8px rgba(30,55,25,.05)}
+
+/* ---- 5.9 其它子页:限宽白卡(表单/详情/列表型) ---- */
+.pi-page{background:#edeae4;padding:16px 18px 30px}
+.pi-page .pi-card{border-radius:12px;box-shadow:0 2px 10px rgba(30,55,25,.04)}
+.cart-page{background:#edeae4;padding:16px 18px 90px}
+.cart-page .cart-toolbar{border-radius:12px 12px 0 0}
+.cart-page .cart-list{border-radius:0 0 12px 12px;background:#f4f1eb;padding:8px 12px 10px}
+.cart-empty{border-radius:12px;box-shadow:0 2px 10px rgba(30,55,25,.04)}
+
+/* ---- 5.10 其余灰根页(自身白卡+灰缝已是桌面标准形态,仅给无背景页兜底) ---- */
+.search-page{background:#fff;border-radius:14px;min-height:70vh;margin:16px 18px;
+  padding:16px 20px 40px;box-shadow:0 2px 10px rgba(30,55,25,.05)}
+.pr-page{background:#edeae4;min-height:calc(100vh - 56px)}
+
+/* ---- 5.11 云监控系统(全屏子应用入口,页面 cloud-monitor) ---- */
+.pc-cms{display:flex;align-items:center;gap:6px;flex:none;margin-left:4px;padding:7px 14px;
+  border-radius:18px;border:1px solid rgba(255,255,255,.45);color:#fff;font-size:14px;
+  cursor:pointer;user-select:none;transition:background .15s,border-color .15s;white-space:nowrap}
+.pc-cms:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.75)}
+.pc-cms__ic{font-size:11px;color:var(--color-accent)}
+.page--fullscreen{max-width:none;width:100%;height:100vh;min-height:0;margin:0;padding:0;
+  background:#0a1526}
+.cms-frame{display:block;width:100%;height:100vh;border:0}

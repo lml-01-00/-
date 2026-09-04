@@ -1,0 +1,1722 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>千乡农田AI检测系统</title>
+<style>
+/* ==================== 视觉规范 ==================== */
+:root{
+  --blue:#2b7de9;        /* 科技蓝(主色) */
+  --blue-deep:#0e5cb8;
+  --blue-bg:#0a1526;
+  --blue-panel:#0f2547;
+  --green:#22b573;       /* 生态绿(点缀) */
+  --green-deep:#0e7a4b;
+  --red:#ef4e4e;         /* 告警红 */
+  --yellow:#f5b63e;      /* 预警黄 */
+  --orange:#f58a3e;
+  --gray:#93a0b8;        /* 数据灰 */
+  --text:#e8f1ff;
+  --text2:#8fa4c9;
+  --line:rgba(93,150,255,.18);
+  --panel:rgba(15,37,71,.6);
+  --font:'Microsoft YaHei','PingFang SC','Source Han Sans SC',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--blue-bg);color:var(--text);font-size:14px;overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:var(--text)}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:rgba(93,150,255,.35);border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+.hidden{display:none!important}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px}
+
+/* ==================== 登录页 ==================== */
+.login-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 600px at 70% -10%,rgba(43,125,233,.25),transparent 60%),
+             radial-gradient(900px 500px at 10% 110%,rgba(34,181,115,.15),transparent 60%),var(--blue-bg)}
+.login-box{width:380px;padding:40px 36px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.login-logo .lg{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--green));
+  display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff}
+.login-box h1{font-size:20px;margin-bottom:2px}
+.login-box .sub{color:var(--text2);font-size:12px;margin-bottom:26px}
+.login-box label{display:block;font-size:12px;color:var(--text2);margin:14px 0 6px}
+.login-box input{width:100%;height:38px;padding:0 12px;border-radius:6px;border:1px solid var(--line);
+  background:rgba(10,21,38,.7);color:var(--text);outline:none}
+.login-box input:focus{border-color:var(--blue)}
+.login-box .btn-login{width:100%;height:40px;margin-top:24px;border-radius:6px;font-size:15px;
+  background:linear-gradient(90deg,var(--blue),var(--blue-deep));color:#fff;letter-spacing:4px}
+.login-box .btn-login:hover{filter:brightness(1.15)}
+.login-tip{margin-top:14px;font-size:12px;color:var(--text2);text-align:center}
+.back-shop{margin-top:16px;font-size:12px;color:var(--text2);text-align:center;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.back-shop:hover{color:var(--text)}
+
+/* ==================== 应用整体 ==================== */
+.app{height:100%;display:flex;flex-direction:column}
+.end-switch{height:40px;flex:none;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(90deg,#0d1e3c,#0f2547,#0d1e3c);border-bottom:1px solid var(--line)}
+.end-tab{height:28px;padding:0 22px;border-radius:5px;font-size:13px;color:var(--text2);border:1px solid var(--line)}
+.end-tab.active{background:linear-gradient(90deg,var(--blue),var(--blue-deep));color:#fff;border-color:transparent}
+.end{flex:1;display:flex;flex-direction:column;min-height:0}
+
+/* ==================== 顶栏 ==================== */
+.topbar{height:52px;flex:none;display:flex;align-items:center;padding:0 16px;gap:14px;
+  background:linear-gradient(90deg,#0d1e3c,#12305e);border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;margin-right:6px}
+.logo .lg{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--green));
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff}
+.logo .name{font-size:17px;font-weight:700;letter-spacing:1px}
+.logo .name b{color:var(--green);font-weight:700}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.top-item{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:5px;font-size:13px;color:var(--text2);position:relative}
+.top-item:hover{background:rgba(93,150,255,.12);color:var(--text)}
+.top-item .dot{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:4px;right:7px}
+.tb-time{font-variant-numeric:tabular-nums;color:var(--text)}
+.tb-divider{width:1px;height:20px;background:var(--line)}
+
+/* ==================== 侧栏 ==================== */
+.sidebar{width:180px;flex:none;border-right:1px solid var(--line);background:rgba(13,30,60,.5);padding:10px 0;overflow-y:auto}
+.sidebar .menu{padding:8px 14px;display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text2);
+  border-left:3px solid transparent;cursor:pointer;margin-bottom:2px}
+.sidebar .menu:hover{color:var(--text);background:rgba(43,125,233,.08)}
+.sidebar .menu.active{color:var(--text);background:linear-gradient(90deg,rgba(43,125,233,.22),transparent);border-left-color:var(--blue);font-weight:600}
+.sidebar .menu .ic{width:18px;text-align:center;font-size:15px}
+.sidebar .group-label{font-size:11px;color:var(--text2);padding:14px 14px 6px;letter-spacing:2px;opacity:.7}
+
+/* ==================== 监控端主区 ==================== */
+.monitor-body{flex:1;display:flex;min-height:0}
+.video-area{flex:1;display:flex;flex-direction:column;min-width:0;padding:10px}
+.video-toolbar{flex:none;display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:10px;flex-wrap:wrap}
+.tb-group{display:flex;align-items:center;gap:6px;border-right:1px solid var(--line);padding-right:10px;margin-right:2px}
+.tb-group:last-child{border-right:none}
+.tool-btn{height:30px;padding:0 12px;border-radius:5px;font-size:12.5px;border:1px solid var(--line);color:var(--text2);display:flex;align-items:center;gap:5px}
+.tool-btn:hover{color:var(--text);border-color:var(--blue);background:rgba(43,125,233,.12)}
+.tool-btn.on{color:#fff;background:var(--blue);border-color:var(--blue)}
+.tool-btn.red-on{color:#fff;background:var(--red);border-color:var(--red)}
+.split-btn{min-width:34px;justify-content:center;padding:0 8px}
+.switch{width:38px;height:20px;border-radius:10px;background:rgba(147,160,184,.35);position:relative;transition:.2s;flex:none}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on{background:var(--green)}
+.switch.on::after{left:20px}
+.switch-label{font-size:12.5px;color:var(--text2)}
+.label-on{color:var(--green);font-weight:600}
+
+/* 视频网格 */
+.cam-grid{flex:1;display:grid;gap:8px;min-height:0}
+.cam-grid.cols-1{grid-template-columns:1fr;grid-template-rows:1fr}
+.cam-grid.cols-2{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.cam-grid.cols-3{grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr}
+.cam-grid.cols-4{grid-template-columns:1fr 1fr 1fr 1fr;grid-template-rows:1fr 1fr 1fr 1fr}
+.cam-cell{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#0c1a30;cursor:pointer;min-height:0}
+.cam-cell.selected{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 0 14px rgba(43,125,233,.4)}
+.cam-view{position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.08),transparent 25%),
+    repeating-linear-gradient(96deg,transparent 0 46px,rgba(10,26,20,.5) 46px 50px),
+    repeating-linear-gradient(5deg,transparent 0 120px,rgba(20,60,35,.35) 120px 126px),
+    linear-gradient(180deg,#3c6b96 0%,#4a7fa8 26%,#6f9f6a 34%,#4a8a4e 55%,#35663a 78%,#2a4d30 100%)}
+.cam-view.off{filter:grayscale(.85) brightness(.55)}
+.cam-view .sun{position:absolute;top:8%;right:12%;width:44px;height:44px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,240,200,.9),rgba(255,240,200,.12) 60%,transparent);opacity:.75}
+.cam-tag{position:absolute;top:6px;left:6px;display:flex;align-items:center;gap:6px;z-index:3}
+.cam-tag .pt{background:rgba(8,16,30,.75);padding:2px 8px;border-radius:4px;font-size:11.5px;border:1px solid rgba(93,150,255,.25)}
+.cam-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green)}
+.cam-tag .dot.off{background:var(--gray);box-shadow:none}
+.cam-fps{position:absolute;top:6px;right:6px;z-index:3;background:rgba(8,16,30,.75);padding:2px 7px;border-radius:4px;font-size:11px;color:var(--text2);font-variant-numeric:tabular-nums}
+.rec-flag{position:absolute;top:32px;right:6px;z-index:3;background:rgba(239,78,78,.85);color:#fff;padding:2px 7px;border-radius:4px;font-size:10.5px;display:none}
+.cam-cell.rec .rec-flag{display:block}
+.cam-cell.rec .rec-flag .rec-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#fff;margin-right:4px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.cam-off-cover{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:rgba(8,16,30,.55);font-size:12.5px;color:var(--text2)}
+.ai-box{position:absolute;border:2px solid var(--red);border-radius:3px;z-index:2;animation:aiIn .25s ease,aiPulse 2.4s ease-in-out infinite}
+.ai-box .ai-tag{position:absolute;top:-19px;left:-2px;background:var(--red);color:#fff;font-size:10.5px;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.ai-box.type-pest{border-color:var(--red)}.ai-box.type-pest .ai-tag{background:var(--red)}
+.ai-box.type-weed{border-color:var(--orange)}.ai-box.type-weed .ai-tag{background:var(--orange)}
+.ai-box.type-drought{border-color:var(--yellow)}.ai-box.type-drought .ai-tag{background:var(--yellow);color:#3a2a00}
+.ai-box.type-intruder{border-color:#d453f5}.ai-box.type-intruder .ai-tag{background:#d453f5}
+.ai-box.type-machine{border-color:#45aaf2}.ai-box.type-machine .ai-tag{background:#45aaf2}
+@keyframes aiIn{from{opacity:0;transform:scale(.8)}}
+@keyframes aiPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}50%{box-shadow:0 0 8px rgba(255,255,255,.25)}}
+.cam-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:13px}
+.cam-sel-bar{position:absolute;bottom:6px;left:6px;right:6px;z-index:4;display:none;align-items:center;gap:6px;
+  background:rgba(8,16,30,.8);padding:4px 8px;border-radius:5px}
+.cam-cell.selected .cam-sel-bar{display:flex}
+.cam-sel-bar .sb-btn{font-size:11px;color:var(--text2);padding:2px 7px;border-radius:4px;border:1px solid var(--line)}
+.cam-sel-bar .sb-btn:hover{color:#fff;border-color:var(--blue)}
+
+/* ==================== 右侧面板 ==================== */
+.right-panel{width:320px;flex:none;border-left:1px solid var(--line);background:rgba(13,30,60,.45);padding:10px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.panel-card{padding:12px;border-radius:8px}
+.pc-title{font-size:12.5px;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.pc-title::before{content:'';width:3px;height:12px;background:var(--blue);border-radius:2px}
+.pc-title .pc-val{color:var(--text);font-size:22px;font-weight:700;margin-left:auto;font-variant-numeric:tabular-nums}
+.ai-total{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:8px}
+.ai-total .num{font-size:34px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums;line-height:1}
+.ai-total .num em{font-style:normal;font-size:13px;color:var(--text2);font-weight:400;margin-left:4px}
+.normal-abnormal{display:flex;gap:8px}
+.na-item{flex:1;text-align:center;padding:8px 4px;border-radius:6px;border:1px solid var(--line);background:rgba(10,21,38,.4)}
+.na-item .v{font-size:19px;font-weight:700}
+.na-item .k{font-size:11px;color:var(--text2);margin-top:2px}
+.na-item.ok .v{color:var(--green)}
+.na-item.bad .v{color:var(--red)}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:7px 2px;border-bottom:1px dashed rgba(93,150,255,.12);font-size:13px}
+.stat-row:last-child{border-bottom:none}
+.stat-row .l{display:flex;align-items:center;gap:8px;color:var(--text2)}
+.stat-row .c-dot{width:9px;height:9px;border-radius:2px}
+.stat-row .v{font-weight:600;font-variant-numeric:tabular-nums}
+.alert-list{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto}
+.alert-item{display:flex;gap:9px;padding:7px 9px;border-radius:6px;border:1px solid var(--line);background:rgba(10,21,38,.45);animation:itemIn .3s ease}
+@keyframes itemIn{from{opacity:0;transform:translateY(-8px)}}
+.alert-item .a-bar{width:3px;border-radius:2px;flex:none}
+.alert-item .a-main{flex:1;min-width:0}
+.alert-item .a-title{font-size:12.5px;display:flex;justify-content:space-between;gap:6px}
+.alert-item .a-title .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-item .a-title .tm{color:var(--text2);font-size:11px;flex:none;font-variant-numeric:tabular-nums}
+.alert-item .a-sub{font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-item .a-pct{margin-top:3px;height:3px;border-radius:2px;background:rgba(147,160,184,.2);position:relative}
+.alert-item .a-pct i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--color)}
+.ring-wrap{position:relative;height:130px;display:flex;align-items:center;justify-content:center}
+.ring-wrap canvas{width:130px;height:130px;max-width:100%}
+.ring-label{position:absolute;text-align:center;pointer-events:none}
+.ring-label .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.ring-label .k{font-size:11px;color:var(--text2)}
+.ring-legend{display:flex;justify-content:center;gap:16px;margin-top:2px;font-size:11.5px;color:var(--text2)}
+
+/* ==================== 底部状态栏 ==================== */
+.statusbar{height:34px;flex:none;display:flex;align-items:center;gap:24px;padding:0 16px;font-size:12px;color:var(--text2);
+  background:linear-gradient(90deg,#0d1e3c,#0f2547);border-top:1px solid var(--line)}
+.statusbar .st{display:flex;align-items:center;gap:7px}
+.statusbar .s-dot{width:8px;height:8px;border-radius:50%}
+.s-dot.g{background:var(--green);box-shadow:0 0 6px var(--green)}
+.s-dot.y{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
+.s-dot.r{background:var(--red);box-shadow:0 0 6px var(--red)}
+.statusbar .sp{margin-left:auto}
+
+/* ==================== 监控端子视图 ==================== */
+.sub-view{flex:1;overflow-y:auto;padding:12px 14px;min-width:0}
+.sub-view .sec{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px}
+.sub-view .sec-title{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.sub-view .sec-title::before{content:'';width:3px;height:14px;background:var(--green);border-radius:2px}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;padding:9px 10px;color:var(--text2);font-weight:500;border-bottom:1px solid var(--line);white-space:nowrap;font-size:12px}
+.tbl td{padding:8px 10px;border-bottom:1px solid rgba(93,150,255,.08)}
+.tbl tr:hover td{background:rgba(43,125,233,.06)}
+.tbl tr{animation:itemIn .3s ease}
+.badge{padding:2px 9px;border-radius:10px;font-size:11px;white-space:nowrap}
+.bg-green{background:rgba(34,181,115,.15);color:var(--green);border:1px solid rgba(34,181,115,.4)}
+.bg-red{background:rgba(239,78,78,.15);color:var(--red);border:1px solid rgba(239,78,78,.4)}
+.bg-yellow{background:rgba(245,182,62,.15);color:var(--yellow);border:1px solid rgba(245,182,62,.4)}
+.bg-orange{background:rgba(245,138,62,.15);color:var(--orange);border:1px solid rgba(245,138,62,.4)}
+.bg-blue{background:rgba(43,125,233,.15);color:var(--blue);border:1px solid rgba(43,125,233,.4)}
+.bg-gray{background:rgba(147,160,184,.15);color:var(--gray);border:1px solid rgba(147,160,184,.4)}
+.bg-purple{background:rgba(212,83,245,.15);color:#d453f5;border:1px solid rgba(212,83,245,.4)}
+.mini-btn{padding:3px 10px;border-radius:4px;font-size:11.5px;border:1px solid var(--line);color:var(--text2);margin-right:5px}
+.mini-btn:hover{color:#fff;border-color:var(--blue);background:rgba(43,125,233,.18)}
+.mini-btn.danger:hover{border-color:var(--red);background:rgba(239,78,78,.18);color:var(--red)}
+.mini-btn.primary{color:var(--blue);border-color:rgba(43,125,233,.5)}
+.empty-tip{color:var(--text2);text-align:center;padding:30px 0;font-size:13px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+.kpi .k{font-size:12px;color:var(--text2)}
+.kpi .v{font-size:26px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums}
+.kpi .v.g{color:var(--green)}.kpi .v.b{color:var(--blue)}.kpi .v.r{color:var(--red)}.kpi .v.y{color:var(--yellow)}
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.filter-bar select,.filter-bar input{height:30px;border-radius:5px;border:1px solid var(--line);background:rgba(10,21,38,.7);
+  color:var(--text);padding:0 8px;font-size:12px;outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--blue)}
+.filter-bar input[type=date]{width:132px}
+
+/* ==================== 后台端 ==================== */
+.admin-body{flex:1;display:flex;min-height:0}
+.admin-main{flex:1;overflow-y:auto;padding:14px;min-width:0}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:17px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--text2);margin-bottom:16px}
+.home-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.home-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.home-card::after{content:'';position:absolute;right:-20px;top:-20px;width:70px;height:70px;border-radius:50%;
+  background:radial-gradient(circle,rgba(43,125,233,.25),transparent 70%)}
+.home-card .k{font-size:12.5px;color:var(--text2);display:flex;align-items:center;gap:7px}
+.home-card .k .ic{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.ic-blue{background:rgba(43,125,233,.15);color:var(--blue)}
+.ic-green{background:rgba(34,181,115,.15);color:var(--green)}
+.ic-red{background:rgba(239,78,78,.15);color:var(--red)}
+.ic-yellow{background:rgba(245,182,62,.15);color:var(--yellow)}
+.home-card .v{font-size:30px;font-weight:700;margin-top:10px;font-variant-numeric:tabular-nums}
+.home-card .v small{font-size:12px;color:var(--text2);font-weight:400;margin-left:6px}
+.home-card .d{font-size:11px;color:var(--text2);margin-top:4px}
+.home-card .d .up{color:var(--green)}.home-card .d .down{color:var(--red)}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.chart-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.chart-card.wide{grid-column:1/-1}
+.chart-card .cc-title{font-size:13.5px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.chart-card .cc-title::before{content:'';width:3px;height:13px;background:var(--blue);border-radius:2px}
+.chart-card .cc-title .extra{margin-left:auto;font-size:11.5px;color:var(--text2);font-weight:400}
+.chart-box{width:100%;height:230px;position:relative}
+.chart-box canvas{width:100%;height:100%}
+.chart-box.sm{height:190px}
+.chart-box.xs{height:160px}
+.tab-tags{display:flex;gap:6px}
+.tab-tag{padding:3px 12px;border-radius:4px;font-size:11.5px;color:var(--text2);border:1px solid var(--line);cursor:pointer}
+.tab-tag.on{color:#fff;background:var(--blue);border-color:var(--blue)}
+.heat-legend{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);justify-content:flex-end}
+.heat-legend .hl{width:14px;height:10px;border-radius:2px}
+.map-wrap{width:100%;height:210px;background:rgba(10,21,38,.5);border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden}
+.map-wrap svg{width:100%;height:100%}
+
+/* 后台监控管理页 */
+.admin-cam{display:flex;gap:12px}
+.admin-cam-main{flex:1;position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--line);height:420px}
+.pt-list{width:210px;flex:none;display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:420px}
+.pt-item{padding:9px 11px;border-radius:6px;border:1px solid var(--line);background:rgba(10,21,38,.4);cursor:pointer;font-size:12.5px}
+.pt-item.on{border-color:var(--blue);background:rgba(43,125,233,.14)}
+.pt-item .nm{display:flex;justify-content:space-between;font-weight:600}
+.pt-item .zn{font-size:11px;color:var(--text2);margin-top:3px}
+.pt-controller{width:150px;flex:none;display:flex;flex-direction:column;gap:8px}
+.ctrl-grid{display:grid;grid-template-columns:repeat(3,38px);gap:5px;justify-content:center}
+.ctrl-btn{height:36px;border-radius:6px;border:1px solid var(--line);background:rgba(10,21,38,.5);color:var(--text2);font-size:12px}
+.ctrl-btn:hover{color:#fff;border-color:var(--blue);background:rgba(43,125,233,.25)}
+.ctrl-grid .blank{visibility:hidden}
+
+/* 弹窗 */
+.mask{position:fixed;inset:0;background:rgba(4,10,22,.7);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{width:480px;max-width:92vw;max-height:86vh;overflow-y:auto;background:#0e2039;border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 18px 60px rgba(0,0,0,.5);animation:itemIn .25s ease}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;font-size:15px;font-weight:600}
+.modal-head .x{margin-left:auto;color:var(--text2);font-size:18px;cursor:pointer;padding:0 4px}
+.modal-head .x:hover{color:var(--red)}
+.modal-body{padding:16px 18px;font-size:13px}
+.modal-body label{display:block;font-size:12px;color:var(--text2);margin:12px 0 5px}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;height:34px;padding:0 10px;border-radius:5px;border:1px solid var(--line);
+  background:rgba(10,21,38,.7);color:var(--text);outline:none;font-size:12.5px}
+.modal-body textarea{height:70px;padding:8px 10px;resize:none}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{border-color:var(--blue)}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px}
+.btn{height:32px;padding:0 20px;border-radius:5px;font-size:13px}
+.btn-main{background:linear-gradient(90deg,var(--blue),var(--blue-deep));color:#fff}
+.btn-main:hover{filter:brightness(1.15)}
+.btn-ghost{border:1px solid var(--line);color:var(--text2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--blue)}
+.btn-danger{background:rgba(239,78,78,.18);border:1px solid var(--red);color:var(--red)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-green{background:rgba(34,181,115,.18);border:1px solid var(--green);color:var(--green)}
+.btn-green:hover{background:var(--green);color:#fff}
+
+/* AI 识别设置面板 */
+.ai-panel{position:fixed;right:0;top:0;bottom:0;width:330px;background:#0e2039;border-left:1px solid var(--line);z-index:90;
+  box-shadow:-12px 0 40px rgba(0,0,0,.4);padding:18px;overflow-y:auto;animation:slideIn .25s ease}
+@keyframes slideIn{from{transform:translateX(100%)}}
+.ai-panel .ap-title{font-size:15px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.ai-panel .ap-title .x{color:var(--text2);font-size:18px;cursor:pointer}
+.ai-panel .ap-title .x:hover{color:var(--red)}
+.check-item{display:flex;align-items:center;justify-content:space-between;padding:10px 2px;border-bottom:1px dashed rgba(93,150,255,.12)}
+.check-item .l{display:flex;align-items:center;gap:9px;font-size:13px}
+.check-item .l .c-dot{width:10px;height:10px;border-radius:3px}
+.ck{width:36px;height:19px;border-radius:10px;background:rgba(147,160,184,.35);position:relative;transition:.2s;cursor:pointer;flex:none}
+.ck::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:.2s}
+.ck.on{background:var(--green)}
+.ck.on::after{left:19px}
+.range-row{margin:14px 0}
+.range-row .r-l{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text2);margin-bottom:6px}
+.range-row .r-l b{color:var(--text);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--blue)}
+
+/* 告警弹窗 */
+.alert-toast{position:fixed;right:20px;bottom:70px;width:360px;background:#1a1030;border:1px solid rgba(239,78,78,.55);border-radius:10px;z-index:110;
+  box-shadow:0 12px 40px rgba(0,0,0,.55);animation:atIn .3s ease}
+@keyframes atIn{from{transform:translateY(20px);opacity:0}}
+.at-head{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid rgba(239,78,78,.3);font-size:13.5px;font-weight:600}
+.at-head .red-dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+.at-head .x{margin-left:auto;color:var(--text2);cursor:pointer;font-size:16px;padding:0 4px}
+.at-body{display:flex;gap:12px;padding:13px 14px}
+.at-thumb{width:110px;height:70px;border-radius:6px;flex:none;border:1px solid rgba(239,78,78,.4);position:relative;overflow:hidden;
+  background:linear-gradient(180deg,#3c6b96,#4a8a4e 60%,#35663a)}
+.at-thumb .ai-box2{position:absolute;border:2px solid var(--red);border-radius:2px;left:28%;top:30%;width:46%;height:42%}
+.at-thumb .ai-box2::after{content:'异常';position:absolute;top:-16px;left:-2px;background:var(--red);color:#fff;font-size:9px;padding:0 5px;border-radius:2px}
+.at-msg{font-size:13.5px;font-weight:600;margin-bottom:5px}
+.at-msg b{color:var(--red)}
+.at-sub{font-size:11.5px;color:var(--text2);margin-bottom:3px}
+.at-actions{display:flex;gap:8px;padding:0 14px 13px}
+.at-actions .btn{flex:1;height:30px;padding:0}
+
+/* 通知面板 */
+.notice-panel{position:fixed;top:58px;right:14px;width:300px;background:#0e2039;border:1px solid var(--line);border-radius:8px;z-index:95;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);animation:itemIn .2s ease}
+.notice-item{padding:11px 14px;border-bottom:1px solid rgba(93,150,255,.1);font-size:12.5px}
+.notice-item:last-child{border-bottom:none}
+.notice-item .n-t{display:flex;justify-content:space-between;font-weight:600}
+.notice-item .n-t .tm{color:var(--text2);font-size:11px;font-weight:400}
+.notice-item .n-s{color:var(--text2);font-size:11.5px;margin-top:3px}
+.notice-item.unread{border-left:3px solid var(--blue)}
+
+/* toast */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#12305e;border:1px solid var(--blue);color:var(--text);
+  padding:10px 22px;border-radius:6px;font-size:13px;z-index:200;box-shadow:0 8px 30px rgba(0,0,0,.4);animation:itemIn .25s ease}
+
+/* 报表 */
+.report-preview{background:rgba(10,21,38,.6);border:1px solid var(--line);border-radius:8px;padding:18px;font-size:12.5px;line-height:1.9;white-space:pre-wrap;max-height:400px;overflow-y:auto}
+.report-preview .rp-h{font-size:15px;font-weight:700;text-align:center;margin-bottom:8px;color:var(--blue)}
+/* 设置页 */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.set-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.set-card.wide{grid-column:1/-1}
+.set-card .sc-title{font-size:13.5px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.set-card .sc-title::before{content:'';width:3px;height:13px;background:var(--green);border-radius:2px}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:9px 2px;border-bottom:1px dashed rgba(93,150,255,.12);font-size:12.5px}
+.set-row:last-child{border-bottom:none}
+.set-row .k{color:var(--text2)}
+.set-row .v{font-weight:600}
+
+@media (max-width:1280px){
+  .right-panel{width:280px}
+  .home-cards{grid-template-columns:repeat(2,1fr)}
+  .chart-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 登录页 ==================== -->
+<div id="loginPage" class="login-page">
+  <div class="login-box">
+    <div class="login-logo"><div class="lg">田</div>
+      <div><h1>千乡农田AI检测系统</h1></div>
+    </div>
+    <div class="sub">AI实时监控 + 农田云检测平台(演示版)</div>
+    <label>用户名</label>
+    <input id="loginUser" type="text" placeholder="请输入用户名" value="admin">
+    <label>密码</label>
+    <input id="loginPwd" type="password" placeholder="请输入密码">
+    <button class="btn-login" id="btnLogin">登 录</button>
+    <div class="login-tip">演示环境:输入任意账号密码即可登录</div>
+    <div class="back-shop" id="backShopLogin">← 返回千乡一链商城</div>
+  </div>
+</div>
+
+<!-- ==================== 应用主体 ==================== -->
+<div id="app" class="app hidden">
+
+  <!-- 双端切换 -->
+  <div class="end-switch">
+    <button class="end-tab active" data-end="monitor">AI实时监控端</button>
+    <button class="end-tab" data-end="admin">农田云检测后台</button>
+  </div>
+
+  <!-- ==================== AI实时监控端 ==================== -->
+  <div id="monitorEnd" class="end">
+    <header class="topbar">
+      <div class="logo"><div class="lg">田</div>
+        <div class="name">千乡农田<b>AI</b>检测系统</div>
+      </div>
+      <div class="top-item"><span>天气</span><span>晴 26℃</span></div>
+      <div class="tb-divider"></div>
+      <div class="top-item tb-time"><span id="clock">--:--:--</span><span id="dateTxt"></span></div>
+      <div class="top-right">
+        <div class="top-item" id="noticeBtn">消息通知<span class="dot"></span></div>
+        <div class="top-item" id="fullBtn">全屏</div>
+        <div class="tb-divider"></div>
+        <div class="top-item" id="backShopBtn">← 返回商城</div>
+        <div class="top-item">管理员: 千乡农业局</div>
+        <div class="top-item" id="logoutBtn">退出</div>
+      </div>
+    </header>
+    <div class="monitor-body">
+      <aside class="sidebar">
+        <div class="group-label">监控管理</div>
+        <div class="menu active" data-view="view-monitor"><span class="ic">◉</span>实时监控</div>
+        <div class="menu" data-view="view-records"><span class="ic">▤</span>AI识别记录</div>
+        <div class="menu" data-view="view-cams"><span class="ic">◎</span>摄像头管理</div>
+        <div class="group-label">数据管理</div>
+        <div class="menu" data-view="view-alerts"><span class="ic">⚠</span>告警记录</div>
+        <div class="menu" data-view="view-devices"><span class="ic">▦</span>设备状态</div>
+        <div class="group-label">系统</div>
+        <div class="menu" data-view="view-settings"><span class="ic">⚙</span>系统设置</div>
+      </aside>
+
+      <main class="video-area" id="monitorMain">
+        <!-- 实时监控视图 -->
+        <div id="view-monitor" class="view-pane" style="display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="video-toolbar card">
+            <div class="tb-group">
+              <button class="tool-btn split-btn on" data-split="1">1</button>
+              <button class="tool-btn split-btn" data-split="4">4</button>
+              <button class="tool-btn split-btn" data-split="9">9</button>
+              <button class="tool-btn split-btn" data-split="16">16</button>
+            </div>
+            <div class="tb-group">
+              <span class="switch-label">AI智能识别</span>
+              <div class="switch on" id="aiGlobalSwitch"></div>
+              <span class="label-on" id="aiGlobalState">已开启</span>
+            </div>
+            <div class="tb-group">
+              <button class="tool-btn" id="aiTypesBtn">识别类型设置</button>
+            </div>
+            <div class="tb-group">
+              <button class="tool-btn" id="snapBtn">抓拍</button>
+              <button class="tool-btn" id="recBtn">录像</button>
+              <button class="tool-btn">回放</button>
+              <button class="tool-btn">语音对讲</button>
+              <button class="tool-btn">一键聚焦</button>
+            </div>
+          </div>
+          <div id="camGrid" class="cam-grid cols-4"></div>
+        </div>
+        <!-- 其他子视图 -->
+        <div id="view-records" class="sub-view view-pane hidden"></div>
+        <div id="view-cams" class="sub-view view-pane hidden"></div>
+        <div id="view-alerts" class="sub-view view-pane hidden"></div>
+        <div id="view-devices" class="sub-view view-pane hidden"></div>
+        <div id="view-settings" class="sub-view view-pane hidden"></div>
+      </main>
+
+      <aside class="right-panel">
+        <div class="panel-card card">
+          <div class="pc-title">AI今日识别总数<span class="pc-val" id="aiTodayTotal">0</span></div>
+          <div class="normal-abnormal">
+            <div class="na-item ok"><div class="v" id="normalCount">0</div><div class="k">正常地块</div></div>
+            <div class="na-item bad"><div class="v" id="abnormalCount">0</div><div class="k">异常地块</div></div>
+          </div>
+        </div>
+        <div class="panel-card card">
+          <div class="pc-title">AI识别统计</div>
+          <div class="stat-row"><span class="l"><span class="c-dot" style="background:var(--red)"></span>病虫害识别</span><span class="v" id="stat-pest">0</span></div>
+          <div class="stat-row"><span class="l"><span class="c-dot" style="background:var(--orange)"></span>杂草分布</span><span class="v" id="stat-weed">0</span></div>
+          <div class="stat-row"><span class="l"><span class="c-dot" style="background:var(--yellow)"></span>农田环境异常</span><span class="v" id="stat-env">0</span></div>
+          <div class="stat-row"><span class="l"><span class="c-dot" style="background:#d453f5"></span>人员入侵</span><span class="v" id="stat-intruder">0</span></div>
+          <div class="stat-row"><span class="l"><span class="c-dot" style="background:#45aaf2"></span>农机滞留</span><span class="v" id="stat-machine">0</span></div>
+        </div>
+        <div class="panel-card card">
+          <div class="pc-title">实时告警</div>
+          <div class="alert-list" id="alertList"></div>
+        </div>
+        <div class="panel-card card">
+          <div class="pc-title">点位设备在线统计</div>
+          <div class="ring-wrap"><canvas id="ringCanvas"></canvas>
+            <div class="ring-label"><div class="v" id="ringPct">0%</div><div class="k">在线率</div></div>
+          </div>
+          <div class="ring-legend"><span><span style="color:var(--green)">●</span> 在线 <b id="onlineCount">0</b></span><span><span style="color:var(--gray)">●</span> 离线 <b id="offlineCount">0</b></span></div>
+        </div>
+      </aside>
+    </div>
+    <footer class="statusbar">
+      <div class="st"><span class="s-dot g"></span>系统运行正常</div>
+      <div class="st"><span class="s-dot g"></span>AI模型 V3.2 运行中</div>
+      <div class="st"><span class="s-dot g"></span>服务器已连接</div>
+      <div class="st"><span class="s-dot y"></span>今日告警 <b id="todayAlerts">0</b> 条</div>
+      <div class="sp">监控点位 <b id="totalCams">0</b> 个 | 在线 <b id="statusOnline">0</b></div>
+    </footer>
+  </div>
+
+  <!-- ==================== 农田云检测后台 ==================== -->
+  <div id="adminEnd" class="end hidden">
+    <header class="topbar">
+      <div class="logo"><div class="lg">云</div>
+        <div class="name">千乡农田<b>云检测</b>后台</div>
+      </div>
+      <div class="top-item" id="adminBreadcrumb">首页数据大屏</div>
+      <div class="top-right">
+        <div class="top-item" id="backShopAdmin">← 返回商城</div>
+        <div class="top-item">管理员: 千乡农业局</div>
+        <div class="top-item" id="adminLogout">退出</div>
+      </div>
+    </header>
+    <div class="admin-body">
+      <aside class="sidebar">
+        <div class="menu active" data-page="page-home"><span class="ic">◉</span>首页数据大屏</div>
+        <div class="group-label">监控管理</div>
+        <div class="menu" data-page="page-monitor"><span class="ic">◈</span>实时监控管理</div>
+        <div class="menu" data-page="page-ledger"><span class="ic">▤</span>AI检测台账</div>
+        <div class="menu" data-page="page-alert"><span class="ic">⚠</span>告警管理</div>
+        <div class="group-label">基础管理</div>
+        <div class="menu" data-page="page-field"><span class="ic">▦</span>农田地块管理</div>
+        <div class="menu" data-page="page-device"><span class="ic">◎</span>设备管理</div>
+        <div class="menu" data-page="page-report"><span class="ic">▣</span>数据报表</div>
+        <div class="group-label">系统</div>
+        <div class="menu" data-page="page-setting"><span class="ic">⚙</span>系统设置</div>
+      </aside>
+      <main class="admin-main">
+
+        <!-- 首页数据大屏 -->
+        <section id="page-home" class="page active">
+          <div class="page-title">全域农田数据总览</div>
+          <div class="page-sub">千乡项目 · 今日数据更新于 <span id="homeUpdateTime"></span></div>
+          <div class="home-cards">
+            <div class="home-card"><div class="k"><span class="ic ic-blue">田</span>全域农田总地块数</div><div class="v">128<small>块</small></div><div class="d">覆盖 6 个行政村</div></div>
+            <div class="home-card"><div class="k"><span class="ic ic-green">◉</span>监控点位总数</div><div class="v">16<small>个</small></div><div class="d">分布 12 个重点农田</div></div>
+            <div class="home-card"><div class="k"><span class="ic ic-blue">▲</span>在线设备数</div><div class="v" id="hcOnline">13<small>台</small></div><div class="d"><span class="up">↑</span> 在线率 81.2%</div></div>
+            <div class="home-card"><div class="k"><span class="ic ic-red">▼</span>离线设备数</div><div class="v" id="hcOffline">3<small>台</small></div><div class="d"><span class="down">↓</span> 需检查网络/电源</div></div>
+          </div>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <div class="cc-title">AI异常检测次数<span class="extra">环比昨日</span></div>
+              <div class="chart-box sm"><canvas id="abChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-title">告警处理进度</div>
+              <div class="chart-box xs">
+                <div style="display:flex;gap:10px;height:100%">
+                  <div class="panel-card card" style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center">
+                    <div style="font-size:13px;color:var(--text2)">今日告警总数</div>
+                    <div style="font-size:28px;font-weight:700;margin-top:6px" id="alertTotalNum">47</div>
+                    <div style="font-size:11px;color:var(--text2);margin-top:4px">今日 <b style="color:var(--green)">36</b> 已处理 / <b style="color:var(--red)">11</b> 未处理</div>
+                  </div>
+                  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 8px">
+                    <div style="font-size:12px;color:var(--text2);margin-bottom:8px;display:flex;justify-content:space-between"><span>已处理</span><b id="donePct" style="color:var(--green)">77%</b></div>
+                    <div style="height:8px;border-radius:4px;background:rgba(147,160,184,.2);overflow:hidden">
+                      <div id="doneBar" style="height:100%;width:77%;background:linear-gradient(90deg,var(--green),#3fdc93);border-radius:4px;transition:.5s"></div>
+                    </div>
+                    <div style="font-size:12px;color:var(--text2);margin:12px 0 8px;display:flex;justify-content:space-between"><span>紧急告警</span><b id="urgentPct" style="color:var(--red)">4</b></div>
+                    <div style="height:8px;border-radius:4px;background:rgba(147,160,184,.2);overflow:hidden">
+                      <div style="height:100%;width:8%;background:linear-gradient(90deg,var(--red),#ff8a8a);border-radius:4px"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-card wide">
+              <div class="cc-title">农田环境数据趋势
+                <span class="extra">
+                  <span class="tab-tags">
+                    <span class="tab-tag on" data-env="temp">温度</span><span class="tab-tag" data-env="hum">湿度</span>
+                    <span class="tab-tag" data-env="soil">土壤湿度</span><span class="tab-tag" data-env="light">光照</span><span class="tab-tag" data-env="rain">降雨量</span>
+                  </span>
+                </span>
+              </div>
+              <div class="chart-box"><canvas id="envChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-title">异常点位热力分布
+                <span class="extra"><span class="heat-legend"><span class="hl" style="background:#1d7a3f"></span>正常 <span class="hl" style="background:#f5b63e"></span>预警 <span class="hl" style="background:#ef4e4e"></span>异常</span></span>
+              </div>
+              <div class="map-wrap" id="heatMap"></div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-title">农事状态统计</div>
+              <div class="chart-box sm"><canvas id="farmPie"></canvas></div>
+              <div class="ring-legend" id="farmLegend"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 实时监控管理 -->
+        <section id="page-monitor" class="page">
+          <div class="page-title">实时监控管理</div>
+          <div class="page-sub">同步 AI 端视频流,支持远程操控摄像头、切换监控点位</div>
+          <div class="admin-cam">
+            <div class="pt-list" id="adminCamList"></div>
+            <div class="admin-cam-main" id="adminCamMain"></div>
+            <div class="pt-controller card" style="padding:12px">
+              <div class="cc-title" style="font-size:13px;font-weight:600;margin-bottom:10px">云台控制</div>
+              <div class="ctrl-grid">
+                <span></span><button class="ctrl-btn" data-dir="up">↑</button><span></span>
+                <button class="ctrl-btn" data-dir="left">←</button><button class="ctrl-btn" data-dir="home">●</button><button class="ctrl-btn" data-dir="right">→</button>
+                <span></span><button class="ctrl-btn" data-dir="down">↓</button><span></span>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:6px">
+                <button class="ctrl-btn" style="flex:1" data-dir="zoomIn">＋</button>
+                <button class="ctrl-btn" style="flex:1" data-dir="zoomOut">－</button>
+              </div>
+              <div style="margin-top:10px;font-size:11px;color:var(--text2);text-align:center" id="ctrlInfo">点击按钮远程操控</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI检测台账 -->
+        <section id="page-ledger" class="page">
+          <div class="page-title">AI检测台账</div>
+          <div class="page-sub">所有 AI 识别记录,支持筛选、导出、删除与处理标记</div>
+          <div class="filter-bar card" style="padding:10px 12px">
+            <select id="ldTime"><option value="">全部时间</option><option value="today">今日</option><option value="week">本周</option><option value="month">本月</option></select>
+            <select id="ldPoint"><option value="">全部点位</option></select>
+            <select id="ldType"><option value="">全部异常类型</option><option value="病虫害">病虫害</option><option value="杂草">杂草</option><option value="土壤干旱">土壤干旱</option><option value="人员入侵">人员入侵</option><option value="农机滞留">农机滞留</option></select>
+            <select id="ldStatus"><option value="">全部状态</option><option value="待处理">待处理</option><option value="已处理">已处理</option></select>
+            <button class="btn btn-ghost" id="ldReset" style="height:30px">重置</button>
+            <button class="btn btn-main" id="ldExport" style="height:30px;margin-left:auto">导出数据(Excel/CSV)</button>
+          </div>
+          <div class="card" style="overflow-x:auto;padding:6px">
+            <table class="tbl" id="ldTable"></table>
+          </div>
+        </section>
+
+        <!-- 告警管理 -->
+        <section id="page-alert" class="page">
+          <div class="page-title">告警管理</div>
+          <div class="page-sub">分级告警(一般/重要/紧急),工单处理、备注、闭环管理</div>
+          <div class="filter-bar">
+            <span class="tab-tag on" data-level="">全部告警</span>
+            <span class="tab-tag" data-level="一般">一般</span>
+            <span class="tab-tag" data-level="重要">重要</span>
+            <span class="tab-tag" data-level="紧急">紧急</span>
+          </div>
+          <div class="card" style="overflow-x:auto;padding:6px">
+            <table class="tbl" id="alertTable"></table>
+          </div>
+        </section>
+
+        <!-- 农田地块管理 -->
+        <section id="page-field" class="page">
+          <div class="page-title">农田地块管理</div>
+          <div class="page-sub">绑定地块信息、农户信息、种植作物、种植周期,延续千乡农户台账数据</div>
+          <div class="filter-bar">
+            <button class="btn btn-main" id="fieldAdd" style="height:30px">+ 新增地块</button>
+            <span style="margin-left:auto;font-size:12px;color:var(--text2)">共 <b id="fieldCount">0</b> 块地块</span>
+          </div>
+          <div class="card" style="overflow-x:auto;padding:6px">
+            <table class="tbl" id="fieldTable"></table>
+          </div>
+        </section>
+
+        <!-- 设备管理 -->
+        <section id="page-device" class="page">
+          <div class="page-title">设备管理</div>
+          <div class="page-sub">摄像头、传感器、农机设备新增、编辑、删除、状态监控、故障报修</div>
+          <div class="kpi-row">
+            <div class="kpi"><div class="k">设备总数</div><div class="v b" id="devTotal">0</div></div>
+            <div class="kpi"><div class="k">在线</div><div class="v g" id="devOnline">0</div></div>
+            <div class="kpi"><div class="k">离线</div><div class="v y" id="devOffline">0</div></div>
+            <div class="kpi"><div class="k">故障/维修中</div><div class="v r" id="devFault">0</div></div>
+          </div>
+          <div class="filter-bar">
+            <select id="devType"><option value="">全部类型</option><option>摄像头</option><option>传感器</option><option>农机设备</option></select>
+            <button class="btn btn-main" id="devAdd" style="height:30px;margin-left:auto">+ 新增设备</button>
+          </div>
+          <div class="card" style="overflow-x:auto;padding:6px">
+            <table class="tbl" id="devTable"></table>
+          </div>
+        </section>
+
+        <!-- 数据报表 -->
+        <section id="page-report" class="page">
+          <div class="page-title">数据报表</div>
+          <div class="page-sub">自动生成日/周/月农田检测报告、AI分析报告、农事运维报告</div>
+          <div class="home-cards" style="grid-template-columns:repeat(3,1fr)">
+            <div class="home-card"><div class="k"><span class="ic ic-blue">日</span>日检测报告</div><div class="v" style="font-size:18px">今日检测 47 次</div><div class="d">覆盖 12 个点位 · 异常 6 处</div><button class="btn btn-main" data-rp="day" style="margin-top:12px;width:100%">生成日报</button></div>
+            <div class="home-card"><div class="k"><span class="ic ic-green">周</span>周检测报告</div><div class="v" style="font-size:18px">本周检测 312 次</div><div class="d">环比上周 +12.4%</div><button class="btn btn-main" data-rp="week" style="margin-top:12px;width:100%">生成周报</button></div>
+            <div class="home-card"><div class="k"><span class="ic ic-yellow">月</span>月检测报告</div><div class="v" style="font-size:18px">本月检测 1206 次</div><div class="d">环比上月 +8.7%</div><button class="btn btn-main" data-rp="month" style="margin-top:12px;width:100%">生成月报</button></div>
+          </div>
+          <div class="card" style="padding:16px">
+            <div class="cc-title">报告预览<span class="extra"><button class="btn btn-ghost" id="rpExport" style="height:28px">导出报告</button></span></div>
+            <div class="report-preview" id="reportPreview">点击上方按钮生成检测报告</div>
+          </div>
+        </section>
+
+        <!-- 系统设置 -->
+        <section id="page-setting" class="page">
+          <div class="page-title">系统设置</div>
+          <div class="page-sub">账号权限、角色管理、参数配置、AI 模型参数调试、数据同步设置</div>
+          <div class="set-grid">
+            <div class="set-card">
+              <div class="sc-title">账号与权限</div>
+              <table class="tbl">
+                <tr><th>账号</th><th>角色</th><th>权限</th><th>状态</th></tr>
+                <tr><td>admin</td><td>超级管理员</td><td>全部</td><td><span class="badge bg-green">启用</span></td></tr>
+                <tr><td>wangshu</td><td>区级管理员</td><td>监控/台账</td><td><span class="badge bg-green">启用</span></td></tr>
+                <tr><td>lishe</td><td>村级操作员</td><td>查看</td><td><span class="badge bg-green">启用</span></td></tr>
+                <tr><td>guest</td><td>访客</td><td>查看(受限)</td><td><span class="badge bg-gray">停用</span></td></tr>
+              </table>
+            </div>
+            <div class="set-card">
+              <div class="sc-title">角色管理</div>
+              <table class="tbl">
+                <tr><th>角色</th><th>职责</th><th>人数</th></tr>
+                <tr><td>超级管理员</td><td>系统全部管理</td><td>1</td></tr>
+                <tr><td>区级管理员</td><td>数据审核/告警工单</td><td>3</td></tr>
+                <tr><td>村级操作员</td><td>现场处置/设备巡检</td><td>12</td></tr>
+              </table>
+            </div>
+            <div class="set-card">
+              <div class="sc-title">AI 识别参数配置</div>
+              <div class="range-row"><div class="r-l"><span>识别置信度阈值</span><b id="confVal">85%</b></div><input type="range" id="confRange" min="60" max="98" value="85"></div>
+              <div class="range-row"><div class="r-l"><span>告警触发灵敏度</span><b id="sensVal">中</b></div><input type="range" id="sensRange" min="1" max="3" value="2"></div>
+              <div class="set-row"><span class="k">AI 模型版本</span><span class="v">V3.2.1</span></div>
+              <div class="set-row"><span class="k">模型最后更新时间</span><span class="v">2026-08-28 09:00</span></div>
+              <div style="margin-top:10px"><button class="btn btn-main" id="aiSaveBtn" style="width:100%">保存配置</button></div>
+            </div>
+            <div class="set-card">
+              <div class="sc-title">数据同步设置</div>
+              <div class="set-row"><span class="k">同步方式</span><span class="v">自动同步(每 10 分钟)</span></div>
+              <div class="set-row"><span class="k">千乡项目数据接口</span><span class="v" style="color:var(--green)">已连接</span></div>
+              <div class="set-row"><span class="k">最后同步时间</span><span class="v" id="syncTime">--:--:--</span></div>
+              <div class="set-row"><span class="k">农户台账同步</span><span class="v">128 条数据</span></div>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <button class="btn btn-main" id="syncBtn" style="flex:1">立即同步</button>
+                <button class="btn btn-green" id="syncLogBtn" style="flex:1">查看同步日志</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- AI 识别类型设置面板 -->
+<div id="aiPanel" class="ai-panel hidden">
+  <div class="ap-title">AI 识别类型设置<span class="x" id="aiPanelClose">×</span></div>
+  <div class="check-item"><span class="l"><span class="c-dot" style="background:var(--red)"></span>病虫害识别</span><div class="ck on" data-type="pest"></div></div>
+  <div class="check-item"><span class="l"><span class="c-dot" style="background:var(--orange)"></span>杂草识别</span><div class="ck on" data-type="weed"></div></div>
+  <div class="check-item"><span class="l"><span class="c-dot" style="background:var(--yellow)"></span>土壤干旱识别</span><div class="ck on" data-type="drought"></div></div>
+  <div class="check-item"><span class="l"><span class="c-dot" style="background:#d453f5"></span>人员入侵识别</span><div class="ck on" data-type="intruder"></div></div>
+  <div class="check-item"><span class="l"><span class="c-dot" style="background:#45aaf2"></span>农机滞留识别</span><div class="ck on" data-type="machine"></div></div>
+  <div style="margin-top:18px">
+    <div style="font-size:12.5px;color:var(--text2);margin-bottom:8px">识别灵敏度</div>
+    <input type="range" min="1" max="3" value="2" style="width:100%">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span>低</span><span>中</span><span>高</span></div>
+  </div>
+  <div style="margin-top:18px;display:flex;gap:8px">
+    <button class="btn btn-main" id="aiApplyBtn" style="flex:1">应用设置</button>
+    <button class="btn btn-ghost" id="aiResetBtn" style="flex:1">恢复默认</button>
+  </div>
+</div>
+
+<!-- 告警弹窗 -->
+<div id="alertToast" class="alert-toast hidden">
+  <div class="at-head"><span class="red-dot"></span>AI 实时告警<span class="x" id="atClose">×</span></div>
+  <div class="at-body">
+    <div class="at-thumb"><div class="ai-box2"></div></div>
+    <div style="min-width:0">
+      <div class="at-msg">【<b id="atType">病虫害</b>】检测到异常情况</div>
+      <div class="at-sub" id="atPoint">点位 · 时间 · 置信度</div>
+    </div>
+  </div>
+  <div class="at-actions">
+    <button class="btn btn-danger" id="atView">查看详情</button>
+    <button class="btn btn-main" id="atHandle">标记处理</button>
+  </div>
+</div>
+
+<!-- 通知面板 -->
+<div id="noticePanel" class="notice-panel hidden">
+  <div class="notice-item unread"><div class="n-t"><span>AI 检测到异常</span><span class="tm">刚刚</span></div><div class="n-s">东区2号地块检测到病虫害,置信度 87%</div></div>
+  <div class="notice-item unread"><div class="n-t"><span>设备离线提醒</span><span class="tm">5 分钟前</span></div><div class="n-s">CAM-15 设备网络中断,请检查</div></div>
+  <div class="notice-item"><div class="n-t"><span>系统升级完成</span><span class="tm">1 小时前</span></div><div class="n-s">AI 模型升级至 V3.2,识别精度提升</div></div>
+  <div class="notice-item"><div class="n-t"><span>巡检任务完成</span><span class="tm">2 小时前</span></div><div class="n-s">本周农田巡检任务已全部完成</div></div>
+</div>
+
+<!-- 通用弹窗 -->
+<div id="modalMask" class="mask hidden"><div id="modalBox" class="modal"></div></div>
+
+<!-- toast -->
+<div id="toastBox" class="toast hidden"></div>
+
+<script>
+/* ==================== 基础工具 ==================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(msg){ const t = $('toastBox'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.add('hidden'), 2600); }
+function nowTime(){ const d = new Date();
+  return [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':'); }
+function nowDate(){ const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function nowFull(){ return `${nowDate()} ${nowTime()}`; }
+
+/* 音频(告警声音,Web Audio 生成) */
+let actx = null;
+function ensureAudio(){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} }
+document.addEventListener('click', ensureAudio, {once:true});
+function beep(){
+  if(!actx) return;
+  try{
+    for(let i=0;i<3;i++){
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i*.35;
+      o.connect(g); g.connect(actx.destination);
+      o.type='square'; o.frequency.value = 880 - i*120;
+      g.gain.setValueAtTime(.06, t);
+      g.gain.exponentialRampToValueAtTime(.001, t+.3);
+      o.start(t); o.stop(t+.32);
+    }
+  }catch(e){}
+}
+
+/* Canvas 图表基础 */
+function prepCanvas(cv){
+  const dpr = window.devicePixelRatio||1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w*dpr; cv.height = h*dpr;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+function drawGrid(ctx,w,h){
+  ctx.strokeStyle='rgba(93,150,255,.09)'; ctx.lineWidth=1;
+  for(let i=1;i<5;i++){ const y=h*i/5; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  for(let i=1;i<8;i++){ const x=w*i/8; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+}
+
+/* ==================== 模拟数据 ==================== */
+const ZONES = ['东区','东区','东区','东区','西区','西区','西区','南区','南区','南区','北区','北区','北区','北区','西区','南区'];
+const PT_NAMES = ['一号田','二号田','三号田','四号田','五号田','六号田','七号田','八号田','九号田','十号田','十一号田','十二号田','十三号田','十四号田','十五号田','十六号田'];
+const CAMS = Array.from({length:16},(_,i)=>({
+  id:`CAM-${String(i+1).padStart(2,'0')}`,
+  name:PT_NAMES[i], zone:ZONES[i],
+  online: i<13,               // 13 在线 3 离线
+  box:null, boxUntil:0
+}));
+const AITYPES = {
+  pest:     {name:'病虫害',   color:'#ef4e4e', stat:'stat-pest', level:'紧急'},
+  weed:     {name:'杂草',     color:'#f58a3e', stat:'stat-weed', level:'一般'},
+  drought:  {name:'土壤干旱', color:'#f5b63e', stat:'stat-env',  level:'重要'},
+  intruder: {name:'人员入侵', color:'#d453f5', stat:'stat-intruder', level:'紧急'},
+  machine:  {name:'农机滞留', color:'#45aaf2', stat:'stat-machine', level:'重要'}
+};
+const state = {
+  split:4, aiOn:true, enabledTypes:Object.keys(AITYPES), recording:false,
+  todayTotal:0, normal:128, abnormal:0,
+  stats:{pest:0,weed:0,env:0,intruder:0,machine:0},
+  alerts:[],
+  activeCam:null, adminCam:0,
+  ledger:[],
+  alertJobs:[], fields:[], devices:[]
+};
+
+/* 初始化台账/告警/地块/设备模拟数据 */
+(function initData(){
+  const types = Object.keys(AITYPES);
+  const rnd = (a,b)=>a+Math.floor(Math.random()*(b-a+1));
+  const timeAgo = min => { const d = new Date(Date.now()-min*60000); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; };
+  for(let i=0;i<28;i++){
+    const t = types[rnd(0,types.length-1)];
+    const cam = CAMS[rnd(0,CAMS.length-1)];
+    const done = i%3!==0;
+    state.ledger.push({
+      id:'AI-'+(2608+i), time:timeAgo(rnd(2,180)), date:nowDate(),
+      cam:cam.id, point:cam.name, zone:cam.zone, type:AITYPES[t].name, color:AITYPES[t].color,
+      conf:rnd(78,97), level:AITYPES[t].level, status:done?'已处理':'待处理'
+    });
+  }
+  state.ledger.sort((a,b)=>b.id.localeCompare(a.id));
+  const levels = ['一般','重要','紧急'];
+  for(let i=0;i<14;i++){
+    const t = types[rnd(0,types.length-1)];
+    const cam = CAMS[rnd(0,CAMS.length-1)];
+    state.alertJobs.push({
+      id:'GD-20260901-'+(1001+i), time:timeAgo(rnd(1,240)), point:cam.name, zone:cam.zone,
+      type:AITYPES[t].name, color:AITYPES[t].color, level:levels[rnd(0,2)],
+      status:['待处理','处理中','已闭环'][rnd(0,2)], handle:'', note:''
+    });
+  }
+  const farmers=['王建国','李秀兰','张德明','刘桂芳','陈志强','赵春梅','孙永福','周玉兰'];
+  const crops=['水稻','小麦','玉米','大豆','蔬菜','果树'];
+  for(let i=1;i<=8;i++){
+    state.fields.push({id:'F-0'+i, name:PT_NAMES[i-1]+'地块', area:(i*3+5)+'亩',
+      farmer:farmers[i-1], crop:crops[(i*2)%crops.length], cycle:'2026-0'+((i%6)+1)+'-05 至 2026-0'+((i%6)+3)+'-15', status:['正常生长','需灌溉','需除虫','需除草'][i%4]});
+  }
+  const devNames=[['摄像头','CAM-0'],['摄像头','CAM-1'],['摄像头','CAM-1'],['传感器','土壤传感'],['传感器','温湿度'],['传感器','光照'],['传感器','雨量'],['农机','拖拉机'],['农机','植保机'],['摄像头','CAM-1']];
+  for(let i=0;i<10;i++){
+    const cam=CAMS[i%16];
+    state.devices.push({id:'DEV-'+(i+1), name:devNames[i][0], code:devNames[i][1]+'-'+String(i+1).padStart(2,'0'),
+      loc:cam.zone+cam.name, status:i<7?'在线':(i<9?'离线':'故障'), model:['DS-2CD','土壤V3','气象X2','东方红'][i%4]});
+  }
+})();
+
+/* ==================== 登录 / 退出 ==================== */
+/* 返回千乡一链商城:同源父级 SPA 优先(hash 回首页),file:// 或跨源降级整页跳转 */
+function backToShop(){
+  try { if (parent && parent !== window && parent.APP) { parent.APP.go('/pages/home/home', 'tab'); return; } } catch(e){}
+  location.replace('../index.html');
+}
+$('backShopBtn').onclick = $('backShopAdmin').onclick = $('backShopLogin').onclick = backToShop;
+$('btnLogin').onclick = ()=>{ try{ localStorage.setItem('cms:auth','1'); }catch(e){} $('loginPage').classList.add('hidden'); $('app').classList.remove('hidden'); toast('欢迎登录千乡农田AI检测系统'); };
+$('logoutBtn').onclick = $('adminLogout').onclick = ()=>{
+  showModal('确认退出登录?', '<p style="color:var(--text2)">退出后需重新登录系统。</p>', [['取消','btn-ghost',closeModal],['确认退出','btn-danger',()=>{ try{ localStorage.removeItem('cms:auth'); }catch(e){} closeModal(); $('app').classList.add('hidden'); $('loginPage').classList.remove('hidden'); }]]);
+};
+$('loginUser').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btnLogin').click(); });
+$('loginPwd').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btnLogin').click(); });
+
+/* ==================== 双端切换 ==================== */
+document.querySelectorAll('.end-tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.end-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const end = tab.dataset.end;
+    $('monitorEnd').classList.toggle('hidden', end!=='monitor');
+    $('adminEnd').classList.toggle('hidden', end!=='admin');
+    if(end==='admin'){ setTimeout(()=>{ renderHomeCharts(); renderAdminCams(); },50); }
+    if(end==='monitor'){ renderCamGrid(); }
+  };
+});
+
+/* ==================== 顶栏:时间 / 全屏 / 通知 ==================== */
+setInterval(()=>{
+  $('clock').textContent = nowTime();
+  $('dateTxt').textContent = nowDate();
+},1000);
+$('fullBtn').onclick = ()=>{
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+  else document.exitFullscreen();
+};
+$('noticeBtn').onclick = e=>{ e.stopPropagation(); $('noticePanel').classList.toggle('hidden'); };
+document.addEventListener('click',e=>{ if(!e.target.closest('.notice-panel')) $('noticePanel').classList.add('hidden'); });
+
+/* ==================== 监控端:菜单切换 ==================== */
+document.querySelectorAll('#monitorEnd .menu').forEach(m=>{
+  m.onclick = ()=>{
+    document.querySelectorAll('#monitorEnd .menu').forEach(x=>x.classList.remove('active'));
+    m.classList.add('active');
+    const v = m.dataset.view;
+    document.querySelectorAll('#monitorMain .view-pane').forEach(p=>p.classList.add('hidden'));
+    document.querySelectorAll('#monitorMain .view-pane').forEach(p=>{ if(p.id===v) p.classList.remove('hidden'); });
+    if(v==='view-records') renderMonRecords();
+    if(v==='view-cams') renderMonCams();
+    if(v==='view-alerts') renderMonAlerts();
+    if(v==='view-devices') renderMonDevices();
+    if(v==='view-settings') renderMonSettings();
+  };
+});
+
+/* ==================== 监控端:视频网格 ==================== */
+function renderCamGrid(){
+  const grid = $('camGrid');
+  const n = state.split;
+  grid.className = 'cam-grid cols-'+n;
+  const visible = CAMS.slice(0, n);
+  grid.innerHTML = visible.map(cam=>{
+    if(!cam.online) return `<div class="cam-cell" data-cam="${cam.id}">
+      <div class="cam-view off"></div>
+      <div class="cam-tag"><span class="dot off"></span><span class="pt">${cam.id} · ${cam.zone}${cam.name}</span></div>
+      <div class="cam-off-cover">设备离线<br><span style="font-size:11px">请检查网络/电源连接</span></div>
+    </div>`;
+    return `<div class="cam-cell" data-cam="${cam.id}">
+      <div class="cam-view"><div class="sun"></div></div>
+      <div class="cam-tag"><span class="dot"></span><span class="pt">${cam.id} · ${cam.zone}${cam.name}</span></div>
+      <div class="cam-fps">${String(24+cam.id.length+((cam.id.charCodeAt(4)-48)%4)).padStart(2,'0')} fps</div>
+      <div class="rec-flag"><span class="rec-dot"></span>REC 00:00</div>
+      <div class="ai-box-wrap" data-box></div>
+      <div class="cam-sel-bar">
+        <button class="sb-btn" data-act="snap">抓拍</button>
+        <button class="sb-btn" data-act="focus">聚焦</button>
+        <button class="sb-btn" data-act="talk">对讲</button>
+        <button class="sb-btn" data-act="full">放大</button>
+      </div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.cam-cell').forEach(cell=>{
+    const cam = CAMS.find(c=>c.id===cell.dataset.cam);
+    if(cam && cam.online && cam.box) drawBox(cell, cam.box);
+    if(state.recording && cam.online) cell.classList.add('rec');
+    cell.addEventListener('click', e=>{
+      const act = e.target.closest('.sb-btn');
+      if(act){
+        const c = CAMS.find(x=>x.id===cell.dataset.cam);
+        if(act.dataset.act==='snap'){ toast(`已抓拍 ${c.id} 当前画面`); }
+        if(act.dataset.act==='focus'){ toast(`已对 ${c.id} 一键聚焦`); }
+        if(act.dataset.act==='talk'){ toast(`已发起与 ${c.id} 语音对讲`); }
+        if(act.dataset.act==='full'){ state.split=1; syncSplitBtns(); renderCamGrid(); }
+        return;
+      }
+      if(!cam.online) return;
+      if(state.split===1 && state.activeCam===cam.id){ return; }
+      if(state.split===1){ state.activeCam=null; state.split=4; syncSplitBtns(); renderCamGrid(); return; }
+      state.activeCam = cam.id; state.split=1; syncSplitBtns(); renderCamGrid();
+    });
+  });
+}
+function drawBox(cell, box){
+  const wrap = cell.querySelector('[data-box]');
+  wrap.innerHTML = `<div class="ai-box type-${box.type}" style="left:${box.x}%;top:${box.y}%;width:${box.w}%;height:${box.h}%">
+    <span class="ai-tag">${AITYPES[box.type].name} ${box.conf}%</span></div>`;
+}
+document.querySelectorAll('.split-btn').forEach(b=>{
+  b.onclick = ()=>{ state.split = +b.dataset.split; state.activeCam=null; syncSplitBtns(); renderCamGrid(); };
+});
+function syncSplitBtns(){
+  document.querySelectorAll('.split-btn').forEach(b=>b.classList.toggle('on', +b.dataset.split===state.split));
+}
+
+/* AI 框模拟:每 3.5 秒刷新一次画面内标注 */
+setInterval(()=>{
+  if(!state.aiOn) return;
+  const visible = CAMS.slice(0, state.split);
+  visible.forEach(cam=>{
+    if(!cam.online) return;
+    if(cam.box && Date.now()<cam.boxUntil) return;
+    cam.box = null;
+    if(Math.random()<0.62){
+      const en = state.enabledTypes;
+      const type = en[Math.floor(Math.random()*en.length)];
+      cam.box = {type, conf:78+Math.floor(Math.random()*19),
+        x:8+Math.random()*60, y:10+Math.random()*55, w:8+Math.random()*16, h:7+Math.random()*14,
+        until:Date.now()+6800};
+      cam.boxUntil = cam.box.until;
+      if(Math.random()<0.75){ addStat(type); }
+    }
+  });
+  renderCamGrid();
+},3500);
+
+/* 识别统计 */
+function addStat(type){
+  state.todayTotal++; state.stats[type]++;
+  if(state.normal>0){ state.normal--; state.abnormal++; }
+  $('aiTodayTotal').textContent = state.todayTotal;
+  $('normalCount').textContent = state.normal;
+  $('abnormalCount').textContent = state.abnormal;
+  $(AITYPES[type].stat).textContent = state.stats[type];
+}
+
+/* ==================== AI 开关 / 识别类型面板 ==================== */
+$('aiGlobalSwitch').onclick = function(){
+  state.aiOn = !state.aiOn;
+  this.classList.toggle('on', state.aiOn);
+  $('aiGlobalState').textContent = state.aiOn ? '已开启':'已关闭';
+  $('aiGlobalState').classList.toggle('label-on', state.aiOn);
+  toast(state.aiOn ? 'AI 智能识别已开启':'AI 智能识别已关闭');
+  if(!state.aiOn) renderCamGrid();
+};
+$('aiTypesBtn').onclick = ()=> $('aiPanel').classList.remove('hidden');
+$('aiPanelClose').onclick = ()=> $('aiPanel').classList.add('hidden');
+$('aiApplyBtn').onclick = ()=>{
+  state.enabledTypes = [...document.querySelectorAll('#aiPanel .ck.on')].map(c=>c.dataset.type);
+  $('aiPanel').classList.add('hidden');
+  toast('识别类型设置已应用');
+};
+$('aiResetBtn').onclick = ()=>{
+  document.querySelectorAll('#aiPanel .ck').forEach(c=>c.classList.add('on'));
+  toast('已恢复默认识别类型');
+};
+document.querySelectorAll('#aiPanel .ck').forEach(ck=>{ ck.onclick = ()=> ck.classList.toggle('on'); });
+
+/* ==================== 录像 / 抓拍 ==================== */
+$('recBtn').onclick = function(){
+  state.recording = !state.recording;
+  this.classList.toggle('red-on', state.recording);
+  toast(state.recording ? '开始录像':'停止录像');
+  renderCamGrid();
+};
+$('snapBtn').onclick = ()=> toast('已抓拍当前分屏画面');
+
+/* ==================== 实时告警 ==================== */
+function spawnAlert(){
+  if(!state.aiOn) return;
+  const en = state.enabledTypes;
+  const type = en[Math.floor(Math.random()*en.length)];
+  const t = AITYPES[type];
+  const cam = CAMS[Math.floor(Math.random()*13)];
+  const conf = 82+Math.floor(Math.random()*16);
+  const item = {time:nowTime(), type, name:t.name, color:t.color, cam:cam.id, point:cam.name, zone:cam.zone, conf, level:t.level, id:'AI-'+(2610+Math.floor(Math.random()*900))};
+  state.alerts.unshift(item);
+  if(state.alerts.length>20) state.alerts.pop();
+  cam.box = {type, conf, x:15+Math.random()*50, y:15+Math.random()*45, w:12+Math.random()*14, h:10+Math.random()*12, until:Date.now()+9000};
+  addStat(type);
+  state.ledger.unshift({id:item.id, time:item.time, date:nowDate(), cam:cam.id, point:cam.name, zone:cam.zone, type:t.name, color:t.color, conf, level:t.level, status:'待处理'});
+  $('todayAlerts').textContent = state.alerts.length;
+  renderAlertList();
+  showAlertToast(item);
+  renderCamGrid();
+}
+function renderAlertList(){
+  const list = $('alertList');
+  list.innerHTML = state.alerts.slice(0,12).map(a=>`
+    <div class="alert-item">
+      <div class="a-bar" style="background:${a.color}"></div>
+      <div class="a-main">
+        <div class="a-title"><span class="t">【${a.name}】${a.zone}${a.point}</span><span class="tm">${a.time}</span></div>
+        <div class="a-sub">${a.cam} · 置信度 ${a.conf}% · ${a.level}</div>
+        <div class="a-pct"><i style="width:${a.conf}%;background:${a.color}"></i></div>
+      </div>
+    </div>`).join('') || '<div class="empty-tip">暂无告警</div>';
+}
+/* 告警弹窗 */
+let atTimer=null;
+function showAlertToast(a){
+  $('atType').textContent = a.name;
+  $('atPoint').textContent = `${a.cam} · ${a.zone}${a.point} · ${a.time} · 置信度 ${a.conf}%`;
+  $('alertToast').classList.remove('hidden');
+  beep();
+  clearTimeout(atTimer);
+  atTimer = setTimeout(()=>$('alertToast').classList.add('hidden'), 12000);
+}
+$('atClose').onclick = ()=> $('alertToast').classList.add('hidden');
+$('atHandle').onclick = ()=>{ $('alertToast').classList.add('hidden'); toast('告警已标记为处理中,请在后台完成工单'); };
+$('atView').onclick = ()=>{
+  $('alertToast').classList.add('hidden');
+  document.querySelector('.end-tab[data-end="admin"]').click();
+  document.querySelector('#adminEnd .menu[data-page="page-alert"]').click();
+};
+/* 周期性触发真实告警(30-60s) */
+setTimeout(function alarmLoop(){
+  spawnAlert();
+  setTimeout(alarmLoop, 30000+Math.random()*30000);
+}, 15000);
+
+/* ==================== 环形图(设备在线) ==================== */
+function drawRing(){
+  const {ctx,w,h} = prepCanvas($('ringCanvas'));
+  const cx=w/2, cy=h/2, r=Math.max(Math.min(w,h)/2-12, 30);
+  const online = CAMS.filter(c=>c.online).length, total=CAMS.length;
+  $('ringPct').textContent = Math.round(online/total*100)+'%';
+  $('onlineCount').textContent = online;
+  $('offlineCount').textContent = total-online;
+  $('totalCams').textContent = total;
+  $('statusOnline').textContent = online;
+  ctx.lineWidth=11; ctx.lineCap='round';
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle='rgba(147,160,184,.15)'; ctx.stroke();
+  const pct = online/total;
+  ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+Math.PI*2*pct);
+  ctx.strokeStyle = pct>0.75? 'var(--green)' : pct>0.5? 'var(--yellow)':'var(--red)';
+  ctx.stroke();
+}
+setInterval(drawRing, 5000);
+
+/* ==================== 监控端子视图 ==================== */
+function renderMonRecords(){
+  $('view-records').innerHTML = `
+    <div class="sec"><div class="sec-title">AI 识别记录(近 10 条,全部记录请在云检测后台台账页查看)</div>
+    <table class="tbl"><tr><th>记录编号</th><th>识别时间</th><th>点位</th><th>异常类型</th><th>置信度</th><th>处理状态</th></tr>
+    ${state.ledger.slice(0,10).map(r=>`<tr><td>${r.id}</td><td>${r.date} ${r.time}</td><td>${r.cam} ${r.zone}${r.point}</td>
+      <td><span class="badge" style="color:${r.color};border-color:${r.color};background:${r.color}22">${r.type}</span></td>
+      <td>${r.conf}%</td><td><span class="badge ${r.status==='已处理'?'bg-green':'bg-yellow'}">${r.status}</span></td></tr>`).join('')}
+    </table></div>`;
+}
+function renderMonCams(){
+  $('view-cams').innerHTML = `
+    <div class="sec"><div class="sec-title">摄像头管理 <button class="btn btn-main" style="margin-left:auto;height:28px" id="mcAdd">+ 新增摄像头</button></div>
+    <table class="tbl"><tr><th>设备编号</th><th>安装位置</th><th>状态</th><th>AI 识别</th><th>操作</th></tr>
+    ${CAMS.map((c,i)=>`<tr><td>${c.id}</td><td>${c.zone}${c.name}</td>
+      <td><span class="badge ${c.online?'bg-green':'bg-gray'}">${c.online?'在线':'离线'}</span></td>
+      <td><span class="badge ${c.online&&state.aiOn?'bg-green':'bg-gray'}">${c.online&&state.aiOn?'已启用':'未启用'}</span></td>
+      <td><button class="mini-btn" data-restart="${c.id}">重启</button><button class="mini-btn danger" data-delcam="${c.id}">删除</button></td></tr>`).join('')}
+    </table></div>`;
+  $('view-cams').onclick = e=>{
+    if(e.target.dataset.restart){ toast(e.target.dataset.restart+' 正在重启…'); setTimeout(()=>toast(e.target.dataset.restart+' 重启完成'),1500); }
+    if(e.target.dataset.delcam){ const id=e.target.dataset.delcam; showModal('删除摄像头', `确认删除 ${id} 吗?`, [['取消','btn-ghost',closeModal],['确认删除','btn-danger',()=>{ closeModal(); toast(id+' 已删除'); renderMonCams(); }]]); }
+    if(e.target.id==='mcAdd'){ showModal('新增摄像头', '<label>设备编号</label><input id="mcId" placeholder="如 CAM-17"><label>安装位置</label><input id="mcLoc" placeholder="如 东区十七号田"><label>所属区域</label><select id="mcZone"><option>东区</option><option>西区</option><option>南区</option><option>北区</option></select>', [['取消','btn-ghost',closeModal],['保存','btn-main',()=>{ closeModal(); toast('摄像头添加成功(演示)'); }]]); }
+  };
+}
+function renderMonAlerts(){
+  $('view-alerts').innerHTML = `
+    <div class="sec"><div class="sec-title">告警记录(近 12 条,完整工单闭环请在云检测后台告警管理页操作)</div>
+    <table class="tbl"><tr><th>时间</th><th>点位</th><th>异常类型</th><th>级别</th><th>状态</th></tr>
+    ${state.alerts.slice(0,12).map(a=>`<tr><td>${a.time}</td><td>${a.cam} ${a.zone}${a.point}</td>
+      <td><span class="badge" style="color:${a.color};border-color:${a.color};background:${a.color}22">${a.name}</span></td>
+      <td><span class="badge ${a.level==='紧急'?'bg-red':a.level==='重要'?'bg-orange':'bg-blue'}">${a.level}</span></td>
+      <td><span class="badge bg-yellow">待处理</span></td></tr>`).join('') || '<tr><td colspan="5" class="empty-tip">暂无告警记录</td></tr>'}
+    </table></div>`;
+}
+function renderMonDevices(){
+  const online=CAMS.filter(c=>c.online).length;
+  $('view-devices').innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi"><div class="k">监控点位</div><div class="v b">${CAMS.length}</div></div>
+      <div class="kpi"><div class="k">在线设备</div><div class="v g">${online}</div></div>
+      <div class="kpi"><div class="k">离线设备</div><div class="v y">${CAMS.length-online}</div></div>
+      <div class="kpi"><div class="k">AI 模型状态</div><div class="v" style="font-size:15px;color:var(--green)">运行正常</div></div>
+    </div>
+    <div class="sec"><div class="sec-title">设备运行状态</div>
+    <table class="tbl"><tr><th>设备编号</th><th>位置</th><th>状态</th><th>帧率</th><th>带宽</th></tr>
+    ${CAMS.map(c=>`<tr><td>${c.id}</td><td>${c.zone}${c.name}</td>
+      <td><span class="badge ${c.online?'bg-green':'bg-gray'}">${c.online?'在线':'离线'}</span></td>
+      <td>${c.online? '25 fps':'—'}</td><td>${c.online? (2+ (c.id.charCodeAt(4)%5))+' Mbps':'—'}</td></tr>`).join('')}
+    </table></div>`;
+}
+function renderMonSettings(){
+  $('view-settings').innerHTML = `
+    <div class="sec"><div class="sec-title">AI 识别设置(与工具栏设置同步)</div>
+      <div class="set-row"><span class="k">全局 AI 智能识别</span><span class="v" style="color:${state.aiOn?'var(--green)':'var(--gray)'}">${state.aiOn?'已开启':'已关闭'}</span></div>
+      <div class="set-row"><span class="k">已启用识别类型</span><span class="v">${state.enabledTypes.map(t=>AITYPES[t].name).join('、')}</span></div>
+      <div class="set-row"><span class="k">识别灵敏度</span><span class="v">中</span></div>
+      <div class="set-row"><span class="k">告警声音提醒</span><span class="v" style="color:var(--green)">已开启</span></div>
+      <div class="set-row"><span class="k">告警自动弹窗</span><span class="v" style="color:var(--green)">已开启</span></div>
+    </div>`;
+}
+
+/* ==================== 通用弹窗 ==================== */
+function showModal(title, body, btns){
+  const box = $('modalBox');
+  box.innerHTML = `<div class="modal-head">${title}<span class="x">×</span></div>
+    <div class="modal-body">${body}</div>
+    <div class="modal-foot">${btns.map(b=>`<button class="btn ${b[1]}">${b[0]}</button>`).join('')}</div>`;
+  $('modalMask').classList.remove('hidden');
+  box.querySelector('.modal-head .x').onclick = closeModal;
+  box.querySelectorAll('.modal-foot .btn').forEach((btn,i)=>{
+    const act = btns[i][2];
+    if(act===closeModal || i===0) btn.onclick = act===undefined? closeModal : act;
+    else btn.onclick = act;
+  });
+}
+function closeModal(){ $('modalMask').classList.add('hidden'); }
+
+/* ==================== 后台:菜单切换 ==================== */
+document.querySelectorAll('#adminEnd .menu').forEach(m=>{
+  m.onclick = ()=>{
+    document.querySelectorAll('#adminEnd .menu').forEach(x=>x.classList.remove('active'));
+    m.classList.add('active');
+    const pg = m.dataset.page;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    $('page-'+pg.replace('page-','')).classList.add('active');
+    $('adminBreadcrumb').textContent = m.textContent.trim();
+    if(pg==='page-home'){ $('homeUpdateTime').textContent = nowFull(); renderHomeCharts(); }
+    if(pg==='page-monitor') renderAdminCams();
+    if(pg==='page-ledger') renderLedger();
+    if(pg==='page-alert') renderAlertTable();
+    if(pg==='page-field') renderFieldTable();
+    if(pg==='page-device') renderDevTable();
+    if(pg==='page-report') renderReport('day');
+    if(pg==='page-setting'){ $('syncTime').textContent = nowFull(); }
+  };
+});
+
+/* ==================== 后台:首页大屏图表 ==================== */
+const ENV = {
+  temp:  {name:'温度(℃)',      color:'#f58a3e', data:[18,19,21,24,26,27,28,29,30,29,28,26,24,22,20,19,18,17,17,18,19,20,21,22]},
+  hum:   {name:'湿度(%)',       color:'#45aaf2', data:[68,70,72,70,66,62,58,55,52,50,53,58,64,70,74,76,77,76,75,73,71,69,68,67]},
+  soil:  {name:'土壤湿度(%)',   color:'#22b573', data:[45,44,43,42,41,40,39,38,37,36,36,37,39,41,43,44,44,43,42,41,40,39,38,37]},
+  light: {name:'光照(lux)',     color:'#f5b63e', data:[0,0,0,0,200,1800,8200,26000,52000,68000,72000,61000,42000,25000,9000,2200,300,0,0,0,0,0,0,0]},
+  rain:  {name:'降雨量(mm)',    color:'#45aaf2', data:[0,0,0,0,0,0,0.4,1.2,2.8,3.6,2.1,0.8,0,0,0,0,0,0,0.3,0,0,0,0,0]}
+};
+let envTab = 'temp';
+function drawEnv(){
+  const {ctx,w,h} = prepCanvas($('envChart'));
+  drawGrid(ctx,w,h);
+  const e = ENV[envTab];
+  ctx.font='11px Microsoft YaHei';
+  ctx.fillStyle='rgba(143,164,201,.9)';
+  ctx.fillText(e.name+' 变化趋势(今日 0-23 时)', 10, 16);
+  const max = Math.max(...e.data)*1.15, min = Math.min(...e.data)*0.8;
+  const padL=38,padR=10,padT=30,padB=24;
+  const W=w-padL-padR, H=h-padT-padB;
+  // 网格数值
+  ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const v = min+(max-min)*i/4;
+    const y = padT+H - H*i/4;
+    ctx.fillStyle='rgba(143,164,201,.75)';
+    ctx.fillText(v.toFixed(v>=100?0:1), padL-6, y+4);
+  }
+  ctx.textAlign='center';
+  for(let i=0;i<=6;i++){
+    const x = padL+W*i/6;
+    ctx.fillText(String(Math.round(i*4)), x, h-6);
+  }
+  ctx.textAlign='left';
+  ctx.fillStyle='rgba(143,164,201,.75)';
+  ctx.fillText('时', padL+W-16, h-6);
+  // 折线
+  const pts = e.data.map((v,i)=>[padL+W*i/23, padT+H - (v-min)/(max-min)*H]);
+  ctx.strokeStyle=e.color; ctx.lineWidth=2;
+  ctx.beginPath();
+  pts.forEach((p,i)=> i? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+  ctx.stroke();
+  // 面积渐变
+  const g = ctx.createLinearGradient(0,padT,0,padT+H);
+  g.addColorStop(0, e.color+'44'); g.addColorStop(1, e.color+'00');
+  ctx.beginPath(); pts.forEach((p,i)=> i? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+  ctx.lineTo(padL+W,padT+H); ctx.lineTo(padL,padT+H); ctx.closePath();
+  ctx.fillStyle=g; ctx.fill();
+  pts.forEach(p=>{ ctx.beginPath(); ctx.arc(p[0],p[1],2.5,0,Math.PI*2); ctx.fillStyle=e.color; ctx.fill(); });
+}
+document.querySelectorAll('.tab-tag[data-env]').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('.tab-tag[data-env]').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on'); envTab=t.dataset.env; drawEnv();
+  };
+});
+function drawAbChart(){
+  const {ctx,w,h} = prepCanvas($('abChart'));
+  drawGrid(ctx,w,h);
+  const data = [18,22,16,25,21,31,28,34,26,38,33,47];
+  ctx.fillStyle='rgba(143,164,201,.9)'; ctx.font='11px Microsoft YaHei';
+  ctx.fillText('近12日 AI 异常检测次数', 10, 16);
+  const max=55, padL=30,padR=8,padT=26,padB=20;
+  const W=w-padL-padR, H=h-padT-padB, bw=W/data.length*.62;
+  data.forEach((v,i)=>{
+    const bh = v/max*H;
+    const x = padL+W*i/data.length + (W/data.length-bw)/2;
+    const y = padT+H-bh;
+    const g = ctx.createLinearGradient(0,y,0,padT+H);
+    g.addColorStop(0,'#2b7de9'); g.addColorStop(1,'rgba(43,125,233,.15)');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    if(i===data.length-1){ ctx.rect(x,y,bw,bh); ctx.fillStyle='rgba(239,78,78,.85)'; ctx.fill();
+      ctx.fillStyle='#ef4e4e'; ctx.font='bold 11px Microsoft YaHei';
+      ctx.textAlign='center'; ctx.fillText(v, x+bw/2, y-5);
+    } else {
+      ctx.roundRect ? ctx.roundRect(x,y,bw,bh,3) : ctx.rect(x,y,bw,bh);
+      ctx.fill();
+    }
+    ctx.fillStyle='rgba(143,164,201,.7)'; ctx.font='10px Microsoft YaHei';
+    ctx.textAlign='center';
+    ctx.fillText(String(21+i)+'日', x+bw/2, h-6);
+  });
+  ctx.textAlign='left';
+}
+function drawPie(){
+  const {ctx,w,h} = prepCanvas($('farmPie'));
+  const items = [
+    {name:'正常生长', v:62, color:'#22b573'},
+    {name:'需灌溉', v:18, color:'#f5b63e'},
+    {name:'需除虫', v:12, color:'#f58a3e'},
+    {name:'需除草', v:8, color:'#ef4e4e'}
+  ];
+  const cx=w/2, cy=h/2+6, r=Math.min(w,h)/2-30;
+  let start=-Math.PI/2;
+  items.forEach(it=>{
+    const ang = it.v/100*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,start+ang); ctx.closePath();
+    ctx.fillStyle=it.color; ctx.fill();
+    ctx.strokeStyle='#0a1526'; ctx.lineWidth=2; ctx.stroke();
+    start+=ang;
+  });
+  ctx.fillStyle='#0e2039'; ctx.beginPath(); ctx.arc(cx,cy,r*.62,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='var(--text)'; ctx.font='bold 16px Microsoft YaHei'; ctx.textAlign='center';
+  ctx.fillText('62%', cx, cy+2);
+  ctx.font='11px Microsoft YaHei'; ctx.fillStyle='var(--text2)';
+  ctx.fillText('正常生长', cx, cy+18);
+  $('farmLegend').innerHTML = items.map(it=>`<span><span style="color:${it.color}">●</span> ${it.name} <b>${it.v}%</b></span>`).join('');
+  ctx.textAlign='left';
+}
+function drawHeat(){
+  const w=480,h=210;
+  const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a));
+  let cells='';
+  const row=9, col=15;
+  for(let r=0;r<row;r++){
+    for(let c=0;c<col;c++){
+      const x=c*(w/col), y=r*(h/row), cw=w/col, ch=h/row;
+      const n = rnd(0,100);
+      let fill = '#123f25';
+      if(n>92) fill='#8a2b2b';
+      else if(n>80) fill='#7a4a15';
+      else if(n>65) fill='#5a5520';
+      else if(n>45) fill='#2e5a2a';
+      cells += `<rect x="${x+1}" y="${y+1}" width="${cw-2}" height="${ch-2}" rx="3" fill="${fill}"/>`;
+    }
+  }
+  const labels = [['CAM-01','#fff'],['CAM-07','#fff'],['CAM-13','#fff']];
+  const pos = [[12,22],[w/2-20,60],[w-75,h-18]];
+  const l = labels.map((lb,i)=>`<text x="${pos[i][0]}" y="${pos[i][1]}" font-size="10" fill="${lb[1]}" font-family="Microsoft YaHei">${lb[0]}</text>`).join('');
+  $('heatMap').innerHTML = `<svg viewBox="0 0 ${w} ${h}">${cells}${l}</svg>`;
+}
+function renderHomeCharts(){
+  drawEnv(); drawAbChart(); drawPie(); drawHeat();
+  const done = 36, un = 11;
+  $('alertTotalNum').textContent = done+un;
+  const p = Math.round(done/(done+un)*100);
+  $('donePct').textContent = p+'%'; $('doneBar').style.width = p+'%';
+  $('urgentPct').textContent = '4';
+  $('hcOnline').innerHTML = '13<small>台</small>';
+  $('hcOffline').innerHTML = '3<small>台</small>';
+  setTimeout(drawEnv,0);
+}
+window.addEventListener('resize', ()=>{ if($('adminEnd').classList.contains('hidden')) return; renderHomeCharts(); });
+setInterval(()=>{ if(!$('adminEnd').classList.contains('hidden') && $('page-home').classList.contains('active')) renderHomeCharts(); }, 30000);
+
+/* ==================== 后台:实时监控管理 ==================== */
+function renderAdminCams(){
+  const list = $('adminCamList');
+  list.innerHTML = CAMS.map((c,i)=>`
+    <div class="pt-item ${i===state.adminCam?'on':''}" data-pt="${i}">
+      <div class="nm"><span>${c.id} ${c.zone}${c.name}</span><span style="font-size:10px;color:${c.online?'var(--green)':'var(--gray)'}">${c.online?'在线':'离线'}</span></div>
+      <div class="zn">AI识别:${c.online? '已启用':'未启用'}</div>
+    </div>`).join('');
+  list.querySelectorAll('.pt-item').forEach(el=>{
+    el.onclick = ()=>{ state.adminCam=+el.dataset.pt; renderAdminCams(); };
+  });
+  const c = CAMS[state.adminCam];
+  $('adminCamMain').innerHTML = `
+    <div style="position:absolute;inset:0" class="${c.online?'':'hidden'}">
+      <div class="cam-view" style="position:absolute;inset:0"><div class="sun"></div></div>
+      <div class="cam-tag"><span class="dot"></span><span class="pt">${c.id} · ${c.zone}${c.name}</span></div>
+      <div class="cam-fps">25 fps</div>
+    </div>
+    ${c.online?'':'<div class="cam-off-cover" style="position:absolute;inset:0;background:rgba(8,16,30,.7)">设备离线</div>'}
+    <div style="position:absolute;bottom:10px;left:10px;right:10px;display:flex;gap:8px">
+      <button class="btn btn-ghost" style="height:28px;background:rgba(8,16,30,.6)" id="acSnap">抓拍</button>
+      <button class="btn btn-ghost" style="height:28px;background:rgba(8,16,30,.6)" id="acRec">开始录像</button>
+      <button class="btn btn-ghost" style="height:28px;background:rgba(8,16,30,.6)" id="acFocus">一键聚焦</button>
+      <button class="btn btn-ghost" style="height:28px;background:rgba(8,16,30,.6)" id="acTalk">语音对讲</button>
+      <span style="margin-left:auto;font-size:11px;color:var(--text2);align-self:center">点击点位列表切换监控点位</span>
+    </div>`;
+  $('acSnap').onclick = ()=> toast(`已抓拍 ${c.id} 画面`);
+  $('acRec').onclick = e=>{ e.target.textContent = e.target.textContent==='开始录像'?'停止录像':'开始录像'; e.target.classList.toggle('red-on'); };
+  $('acFocus').onclick = ()=> toast('一键聚焦完成');
+  $('acTalk').onclick = ()=> toast('语音对讲已开启');
+}
+document.querySelectorAll('.ctrl-btn[data-dir]').forEach(b=>{
+  b.onclick = ()=>{
+    const d = b.dataset.dir;
+    const map = {up:'向上转动',down:'向下转动',left:'向左转动',right:'向右转动',home:'回正',zoomIn:'变焦放大',zoomOut:'变焦缩小'};
+    $('ctrlInfo').textContent = map[d] + ' …';
+    setTimeout(()=>$('ctrlInfo').textContent = '点击按钮远程操控', 1200);
+  };
+});
+
+/* ==================== 后台:AI 检测台账 ==================== */
+function renderLedger(){
+  const t=$('ldType'), p=$('ldPoint'), s=$('ldStatus');
+  if(t.options.length===1){ ['病虫害','杂草','土壤干旱','人员入侵','农机滞留'].forEach(x=>{ const o=document.createElement('option'); o.textContent=x; t.appendChild(o); }); }
+  if(p.options.length===1){ CAMS.forEach(c=>{ const o=document.createElement('option'); o.textContent=c.id+' '+c.zone+c.name; p.appendChild(o); }); }
+  applyLedgerFilter();
+}
+function applyLedgerFilter(){
+  const t=$('ldType').value, p=$('ldPoint').value, s=$('ldStatus').value, tm=$('ldTime').value;
+  let rows = state.ledger.filter(r=>{
+    if(t && r.type!==t) return false;
+    if(p && !r.cam.includes(p.split(' ')[0])) return false;
+    if(s && r.status!==s) return false;
+    return true;
+  });
+  const tbl = $('ldTable');
+  tbl.innerHTML = `<tr><th>记录编号</th><th>识别时间</th><th>点位地址</th><th>异常类型</th><th>置信度</th><th>级别</th><th>状态</th><th>操作</th></tr>
+  ${rows.map(r=>`<tr>
+    <td>${r.id}</td><td>${r.date} ${r.time}</td><td>${r.cam} ${r.zone}${r.point}</td>
+    <td><span class="badge" style="color:${r.color};border-color:${r.color};background:${r.color}22">${r.type}</span></td>
+    <td>${r.conf}%</td>
+    <td><span class="badge ${r.level==='紧急'?'bg-red':r.level==='重要'?'bg-orange':'bg-blue'}">${r.level}</span></td>
+    <td><span class="badge ${r.status==='已处理'?'bg-green':'bg-yellow'}">${r.status}</span></td>
+    <td style="white-space:nowrap">
+      <button class="mini-btn" data-ldetail="${r.id}">详情</button>
+      ${r.status!=='已处理'?`<button class="mini-btn primary" data-ldone="${r.id}">标记已处理</button>`:''}
+      <button class="mini-btn danger" data-ldel="${r.id}">删除</button>
+    </td></tr>`).join('') || '<tr><td colspan="8" class="empty-tip">没有匹配的记录</td></tr>'}`;
+  tbl.querySelectorAll('[data-ldetail]').forEach(b=>{
+    b.onclick = ()=>{
+      const r = state.ledger.find(x=>x.id===b.dataset.ldetail);
+      showModal('AI 识别记录详情',
+        `<div style="display:flex;gap:12px;margin-bottom:6px">
+          <div style="width:150px;height:92px;border-radius:6px;border:1px solid var(--line);position:relative;overflow:hidden;flex:none;background:linear-gradient(180deg,#3c6b96,#4a8a4e 60%,#35663a)">
+            <div style="position:absolute;border:2px solid ${r.color};left:25%;top:28%;width:50%;height:42%"></div>
+            <div style="position:absolute;top:0;left:0;right:0;background:rgba(8,16,30,.7);font-size:10px;padding:2px 6px">截图 ${r.date} ${r.time}</div>
+          </div>
+          <div style="font-size:12.5px;line-height:2;color:var(--text2)">
+            <div>记录编号:<b style="color:var(--text)"> ${r.id}</b></div>
+            <div>识别时间:<b style="color:var(--text)"> ${r.date} ${r.time}</b></div>
+            <div>异常类型:<b style="color:${r.color}"> ${r.type}</b></div>
+            <div>置信度:<b style="color:var(--text)"> ${r.conf}%</b></div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:10px;border-radius:6px;background:rgba(10,21,38,.5);font-size:12px;color:var(--text2)">
+          视频片段:${r.cam}_${r.date}_${r.time.replace(/:/g,'')}.mp4(已归档,可在千乡数据后台调取)<br>
+          处理状态:${r.status}
+        </div>`,
+        [['关闭','btn-ghost',closeModal]]);
+    };
+  });
+  tbl.querySelectorAll('[data-ldone]').forEach(b=>{
+    b.onclick = ()=>{
+      const r = state.ledger.find(x=>x.id===b.dataset.ldone);
+      r.status='已处理';
+      const j = state.alertJobs.find(x=>x.point===r.point && x.type===r.type);
+      if(j && j.status!=='已闭环') j.status='处理中';
+      toast(r.id+' 已标记为处理');
+      applyLedgerFilter();
+    };
+  });
+  tbl.querySelectorAll('[data-ldel]').forEach(b=>{
+    b.onclick = ()=>{
+      const id=b.dataset.ldel;
+      showModal('删除记录', `确认删除记录 ${id} 吗?删除后不可恢复。`, [['取消','btn-ghost',closeModal],['确认删除','btn-danger',()=>{ state.ledger=state.ledger.filter(x=>x.id!==id); closeModal(); toast('记录已删除'); applyLedgerFilter(); }]]);
+    };
+  });
+}
+$('ldTime').onchange = $('ldType').onchange = $('ldPoint').onchange = $('ldStatus').onchange = applyLedgerFilter;
+$('ldReset').onclick = ()=>{ $('ldTime').value=''; $('ldType').value=''; $('ldPoint').value=''; $('ldStatus').value=''; applyLedgerFilter(); };
+$('ldExport').onclick = ()=>{
+  const rows = state.ledger;
+  const csv = [['记录编号','识别时间','点位地址','异常类型','置信度','级别','处理状态']].concat(
+    rows.map(r=>[r.id, `${r.date} ${r.time}`, `${r.cam} ${r.zone}${r.point}`, r.type, r.conf+'%', r.level, r.status]));
+  exportFile('AI检测台账_'+nowDate()+'.csv', csv);
+  toast('台账数据已导出为 CSV(可用 Excel 打开)');
+};
+function exportFile(name, rows){
+  const csv = '﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ==================== 后台:告警管理(工单闭环) ==================== */
+let alertLevel='';
+function renderAlertTable(){
+  const rows = alertLevel? state.alertJobs.filter(j=>j.level===alertLevel) : state.alertJobs;
+  const tbl=$('alertTable');
+  tbl.innerHTML = `<tr><th>工单号</th><th>时间</th><th>点位</th><th>异常类型</th><th>级别</th><th>状态</th><th>处理人/备注</th><th>操作</th></tr>
+  ${rows.map(j=>`<tr>
+    <td>${j.id}</td><td>${j.time}</td><td>${j.zone}${j.point}</td>
+    <td><span class="badge" style="color:${j.color};border-color:${j.color};background:${j.color}22">${j.type}</span></td>
+    <td><span class="badge ${j.level==='紧急'?'bg-red':j.level==='重要'?'bg-orange':'bg-blue'}">${j.level}</span></td>
+    <td><span class="badge ${j.status==='已闭环'?'bg-green':j.status==='处理中'?'bg-yellow':'bg-red'}">${j.status}</span></td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;color:var(--text2)">${j.handle? j.handle+(j.note?' · '+j.note:''):'—'}</td>
+    <td style="white-space:nowrap">
+      <button class="mini-btn" data-jhandle="${j.id}">${j.status==='已闭环'?'查看工单':'处理工单'}</button>
+    </td></tr>`).join('') || '<tr><td colspan="8" class="empty-tip">该级别暂无告警</td></tr>'}`;
+  tbl.querySelectorAll('[data-jhandle]').forEach(b=>{
+    b.onclick = ()=>{
+      const j = state.alertJobs.find(x=>x.id===b.dataset.jhandle);
+      showModal(j.status==='已闭环'? '工单详情':'处理工单',
+        `<label>工单号</label><input value="${j.id}" readonly style="opacity:.6">
+        <label>告警内容</label><input value="${j.zone}${j.point} · ${j.type} · ${j.level}级别" readonly style="opacity:.6">
+        <label>处理人</label><input id="jkHandle" placeholder="请输入处理人姓名" value="${j.handle}">
+        <label>处理备注</label><textarea id="jkNote" placeholder="填写处置措施,如:已喷洒药剂/已现场核查…">${j.note}</textarea>
+        ${j.status!=='已闭环'?'<div style="margin-top:10px"><label style="display:flex;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="jkClose" style="width:auto;height:auto"> 处置完成,闭环工单</label></div>':''}`,
+        [['取消','btn-ghost',closeModal],['保存','btn-main',()=>{
+          j.handle = $('jkHandle').value || '系统管理员';
+          j.note = $('jkNote').value;
+          if($('jkClose') && $('jkClose').checked) j.status='已闭环';
+          else if(j.status!=='已闭环') j.status='处理中';
+          closeModal(); toast('工单 '+j.id+' 已更新'); renderAlertTable();
+        }]]);
+    };
+  });
+}
+document.querySelectorAll('#page-alert .tab-tag').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('#page-alert .tab-tag').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on'); alertLevel=t.dataset.level; renderAlertTable();
+  };
+});
+
+/* ==================== 后台:地块管理 ==================== */
+function renderFieldTable(){
+  $('fieldCount').textContent = state.fields.length;
+  $('fieldTable').innerHTML = `<tr><th>地块编号</th><th>地块名称</th><th>面积</th><th>农户</th><th>种植作物</th><th>种植周期</th><th>农事状态</th><th>操作</th></tr>
+  ${state.fields.map(f=>`<tr>
+    <td>${f.id}</td><td>${f.name}</td><td>${f.area}</td><td>${f.farmer}</td><td>${f.crop}</td><td style="font-size:11.5px">${f.cycle}</td>
+    <td><span class="badge ${f.status==='正常生长'?'bg-green':f.status==='需灌溉'?'bg-yellow':f.status==='需除虫'?'bg-orange':'bg-red'}">${f.status}</span></td>
+    <td style="white-space:nowrap"><button class="mini-btn" data-fedit="${f.id}">编辑</button><button class="mini-btn danger" data-fdel="${f.id}">删除</button></td>
+  </tr>`).join('')}`;
+  $('fieldTable').querySelectorAll('[data-fdel]').forEach(b=>{
+    b.onclick = ()=>{ const id=b.dataset.fdel;
+      showModal('删除地块', `确认删除 ${id} 吗?该地块关联的台账数据将一并移除。`, [['取消','btn-ghost',closeModal],['确认删除','btn-danger',()=>{ state.fields=state.fields.filter(x=>x.id!==id); closeModal(); toast('地块已删除'); renderFieldTable(); }]]);
+    };
+  });
+  $('fieldTable').querySelectorAll('[data-fedit]').forEach(b=>{
+    b.onclick = ()=>{ const f=state.fields.find(x=>x.id===b.dataset.fedit);
+      showModal('编辑地块',
+        `<label>地块编号</label><input id="fId" value="${f.id}"><label>地块名称</label><input id="fName" value="${f.name}">
+        <label>面积</label><input id="fArea" value="${f.area}"><label>农户</label><input id="fFarmer" value="${f.farmer}">
+        <label>种植作物</label><input id="fCrop" value="${f.crop}"><label>种植周期</label><input id="fCycle" value="${f.cycle}">`,
+        [['取消','btn-ghost',closeModal],['保存','btn-main',()=>{
+          Object.assign(f,{name:$('fName').value, area:$('fArea').value, farmer:$('fFarmer').value, crop:$('fCrop').value, cycle:$('fCycle').value});
+          closeModal(); toast('地块信息已保存'); renderFieldTable();
+        }]]);
+    };
+  });
+}
+$('fieldAdd').onclick = ()=>{
+  showModal('新增地块',
+    `<label>地块编号</label><input id="fId" placeholder="如 F-009"><label>地块名称</label><input id="fName" placeholder="如 十七号田地块">
+    <label>面积</label><input id="fArea" placeholder="如 32亩"><label>农户</label><input id="fFarmer" placeholder="如 王建国">
+    <label>种植作物</label><input id="fCrop" placeholder="如 水稻"><label>种植周期</label><input id="fCycle" placeholder="如 2026-04-05 至 2026-08-15">`,
+    [['取消','btn-ghost',closeModal],['保存','btn-main',()=>{
+      if(!$('fName').value){ toast('请填写地块名称'); return; }
+      state.fields.unshift({id:$('fId').value||'F-0'+(state.fields.length+1), name:$('fName').value, area:$('fArea').value||'—',
+        farmer:$('fFarmer').value||'—', crop:$('fCrop').value||'—', cycle:$('fCycle').value||'—', status:'正常生长'});
+      closeModal(); toast('地块添加成功(已同步千乡农户台账)'); renderFieldTable();
+    }]]);
+};
+
+/* ==================== 后台:设备管理 ==================== */
+function devStats(){
+  const total=state.devices.length;
+  $('devTotal').textContent=total;
+  $('devOnline').textContent=state.devices.filter(d=>d.status==='在线').length;
+  $('devOffline').textContent=state.devices.filter(d=>d.status==='离线').length;
+  $('devFault').textContent=state.devices.filter(d=>d.status==='故障'||d.status==='维修中').length;
+}
+function renderDevTable(){
+  devStats();
+  const t=$('devType').value;
+  const rows=t? state.devices.filter(d=>d.name===t) : state.devices;
+  $('devTable').innerHTML = `<tr><th>设备编号</th><th>类型</th><th>型号</th><th>安装位置</th><th>状态</th><th>操作</th></tr>
+  ${rows.map(d=>`<tr>
+    <td>${d.id}</td><td>${d.name}</td><td>${d.model}</td><td>${d.loc}</td>
+    <td><span class="badge ${d.status==='在线'?'bg-green':d.status==='离线'?'bg-gray':d.status==='故障'?'bg-red':'bg-yellow'}">${d.status}</span></td>
+    <td style="white-space:nowrap">
+      <button class="mini-btn" data-dedit="${d.id}">编辑</button>
+      ${d.status==='在线'?`<button class="mini-btn" data-drepair="${d.id}">故障报修</button>`:''}
+      <button class="mini-btn danger" data-ddel="${d.id}">删除</button>
+    </td></tr>`).join('')}`;
+  $('devTable').querySelectorAll('[data-ddel]').forEach(b=>{
+    b.onclick = ()=>{ const id=b.dataset.ddel;
+      showModal('删除设备', `确认删除设备 ${id} 吗?`, [['取消','btn-ghost',closeModal],['确认删除','btn-danger',()=>{ state.devices=state.devices.filter(x=>x.id!==id); closeModal(); toast('设备已删除'); renderDevTable(); }]]);
+    };
+  });
+  $('devTable').querySelectorAll('[data-dedit]').forEach(b=>{
+    b.onclick = ()=>{ const d=state.devices.find(x=>x.id===b.dataset.dedit);
+      showModal('编辑设备', `<label>设备编号</label><input id="dId" value="${d.id}"><label>设备名称</label><input id="dName" value="${d.name}">
+        <label>型号</label><input id="dModel" value="${d.model}"><label>安装位置</label><input id="dLoc" value="${d.loc}">`,
+        [['取消','btn-ghost',closeModal],['保存','btn-main',()=>{ Object.assign(d,{name:$('dName').value, model:$('dModel').value, loc:$('dLoc').value}); closeModal(); toast('设备信息已保存'); renderDevTable(); }]]);
+    };
+  });
+  $('devTable').querySelectorAll('[data-drepair]').forEach(b=>{
+    b.onclick = ()=>{ const d=state.devices.find(x=>x.id===b.dataset.drepair);
+      showModal('故障报修', `<label>设备</label><input value="${d.id} ${d.name}" readonly style="opacity:.6">
+        <label>故障描述</label><textarea id="dRepDesc" placeholder="请描述故障现象,如:画面黑屏/无数据上报/机械故障…"></textarea>
+        <label>报修人</label><input id="dRepMan" placeholder="请输入报修人">`,
+        [['取消','btn-ghost',closeModal],['提交报修','btn-danger',()=>{ d.status='维修中'; closeModal(); toast('报修已提交,维修工单已派发(千乡运维台账已同步)'); renderDevTable(); }]]);
+    };
+  });
+}
+$('devType').onchange = renderDevTable;
+$('devAdd').onclick = ()=>{
+  showModal('新增设备', `<label>设备类型</label><select id="dNewType"><option>摄像头</option><option>传感器</option><option>农机设备</option></select>
+    <label>设备名称</label><input id="dNewName" placeholder="如 高清球机-03"><label>型号</label><input id="dNewModel" placeholder="如 DS-2CD">
+    <label>安装位置</label><input id="dNewLoc" placeholder="如 东区七号田">`,
+    [['取消','btn-ghost',closeModal],['保存','btn-main',()=>{
+      state.devices.push({id:'DEV-'+(state.devices.length+1), name:$('dNewType').value, code:'', loc:$('dNewLoc').value||'未分配',
+        status:'在线', model:$('dNewModel').value||'标准型号'});
+      closeModal(); toast('设备添加成功'); renderDevTable();
+    }]]);
+};
+
+/* ==================== 后台:数据报表 ==================== */
+let curReport='day', curReportText='';
+function renderReport(type){
+  curReport=type;
+  const done=36, un=11, total=done+un;
+  const head = type==='day'? `千乡农田AI检测·日检测报告\n${nowDate()} 18:00 自动生成` :
+               type==='week'? '千乡农田AI检测·周检测报告\n2026-08-25 至 2026-08-31 自动生成' :
+               '千乡农田AI检测·月检测报告\n2026-08-01 至 2026-08-31 自动生成';
+  const counts = type==='day'? {a:'今日',n:total,ab:'47 次检测 / 6 处异常'} :
+                 type==='week'? {a:'本周',n:312,ab:'312 次检测 / 43 处异常'} :
+                 {a:'本月',n:1206,ab:'1206 次检测 / 168 处异常'};
+  curReportText = `${head}\n\n一、检测概况\n${counts.a} AI 共识别异常 ${counts.ab},其中:病虫害 18 起、杂草 9 起、土壤干旱 11 起、人员入侵 4 起、农机滞留 5 起。\n\n二、告警处置\n${counts.a}告警总数 ${counts.n} 条,已处理 ${done} 条(77%),未处理 ${un} 条。紧急告警 4 条,均已优先派发工单。\n\n三、环境监测\n平均气温 24.6℃,平均湿度 64%,土壤湿度 41%(东区部分地块低于警戒值 35%),累计降雨 8.2mm。\n\n四、农事建议\n1. 东区 2、3 号地块建议 48 小时内灌溉;\n2. 南区 5 号地块病虫害密度上升,建议尽快组织防治;\n3. 北区 11 号地块杂草覆盖率 23%,建议安排除草作业。\n\n五、设备情况\n16 个监控点位在线 13 个,离线 3 个(已发起故障报修);设备整体运行平稳。\n\n(报告由系统自动生成,同步归档至千乡项目数据后台)`;
+  $('reportPreview').innerHTML = `<div class="rp-h">${head.split('\n')[0]}</div><div style="text-align:center;color:var(--text2);margin-bottom:12px">${head.split('\n')[1]}</div>${curReportText.split('\n').slice(2).map(l=>l||'<br>').join('\n')}`;
+}
+document.querySelectorAll('[data-rp]').forEach(b=>{ b.onclick = ()=>{ renderReport(b.dataset.rp); toast('报告已生成'); }; });
+$('rpExport').onclick = ()=>{
+  if(!curReportText || curReportText.includes('点击')) { toast('请先生成报告'); return; }
+  const blob = new Blob(['﻿'+curReportText], {type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='农田检测报告_'+nowDate()+'.txt'; a.click();
+  URL.revokeObjectURL(a.href); toast('报告已导出');
+};
+
+/* ==================== 后台:系统设置 ==================== */
+$('confRange').oninput = function(){ $('confVal').textContent = this.value+'%'; };
+$('sensRange').oninput = function(){ $('sensVal').textContent = ['低','中','高'][this.value-1]; };
+$('aiSaveBtn').onclick = ()=> toast('AI 识别参数已保存,新参数将在 30 秒内生效');
+$('syncBtn').onclick = ()=>{ toast('正在与千乡项目后台同步数据…'); setTimeout(()=>{ $('syncTime').textContent = nowFull(); toast('数据同步完成:农户台账 128 条、检测数据 1206 条、告警工单 47 条'); }, 1800); };
+$('syncLogBtn').onclick = ()=>{
+  showModal('同步日志', `<div style="font-size:12px;line-height:2.1;color:var(--text2)">
+    <div>2026-09-01 ${nowTime()} 自动同步成功(检测数据 +6)</div>
+    <div>2026-09-01 ${nowTime()} 农户台账同步成功(128 条)</div>
+    <div>2026-09-01 08:10 告警工单同步成功(47 条)</div>
+    <div>2026-08-31 23:59 日报告归档成功</div>
+    <div>2026-08-31 12:00 设备状态同步成功(3 台离线)</div>
+    <div style="color:var(--green)">全部同步正常,无失败记录</div></div>`, [['关闭','btn-ghost',closeModal]]);
+};
+
+/* ==================== 初始化 ==================== */
+/* 登录态保持:已登录且未点退出的,进入时直接跳过登录页(商城进出会重建 iframe) */
+try{ if(localStorage.getItem('cms:auth')){ $('loginPage').classList.add('hidden'); $('app').classList.remove('hidden'); } }catch(e){}
+drawRing();
+renderAlertList();
+renderCamGrid();
+setInterval(()=>{
+  if($('monitorEnd').classList.contains('hidden')) return;
+  $('homeUpdateTime').textContent = nowFull();
+},60000);
+$('homeUpdateTime').textContent = nowFull();
+</script>
+</body>
+</html>
